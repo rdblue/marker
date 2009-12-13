@@ -1,0 +1,679 @@
+#--
+# Copyright 2009 Ryan Blue.
+# Distributed under the terms of the GNU General Public License (GPL).
+# See the LICENSE file for further information on the GPL.
+#++
+
+module Marker
+  grammar Language
+    rule markup
+      h:block rnl r:markup <Markup>
+      /
+      h:block "" <Markup>
+    end
+
+    rule block
+      line
+      /
+      text
+      /
+      ws { # allows blank lines
+        def to_html( options = {} )
+          ""
+        end
+
+        def to_s( options = {} )
+          ""
+        end
+      }
+    end
+
+    ##### special lines
+    rule line
+      heading
+      /
+      list
+      /
+      verbatim_area
+      /
+      horiz_rule
+    end
+
+    rule heading
+      s:heading_toggle+ ws l:heading_enclosed_text ws e:heading_toggle+ <Heading>
+    end
+
+    rule heading_enclosed_text
+      h:heading_toggle ws r:heading_enclosed_text <Phrase>
+      /
+      h:heading_enclosed_word ws r:heading_enclosed_text <Phrase>
+      /
+      h:heading_enclosed_word "" <Phrase>
+    end
+
+    rule heading_enclosed_word
+      bold
+      /
+      italic
+      /
+      link
+      /
+      template
+      /
+      url
+      /
+      plain_word
+      /
+      bold_toggle # allow unmatched delimiters after we have ruled out structures
+      /
+      italic_toggle
+      /
+      internal_link_start
+      /
+      internal_link_end
+      /
+      external_link_start
+      /
+      external_link_end
+      /
+      template_start
+      /
+      template_end
+      /
+      arg_delimiter
+      /
+      term_delimiter
+    end
+
+    # a series of list items, so they can be coalesced
+    rule list
+      h:list_item rnl r:list <List>
+      /
+      h:list_item "" <List>
+    end
+
+    # for matching any list item
+    rule list_item
+      bulleted
+      /
+      numbered
+      /
+      indented
+      /
+      definition
+    end
+
+    rule bulleted
+      '*' ws list_item <Bulleted>
+      /
+      '*' ws phrase <Bulleted>
+    end
+
+    rule numbered
+      '#' ws list_item <Numbered>
+      /
+      '#' ws phrase <Numbered>
+    end
+
+    rule indented
+      ':' ws list_item <Indented>
+      /
+      ':' ws phrase <Indented>
+    end
+
+    rule definition
+      ';' ws term:definition_term_text ws term_delimiter ws definition:phrase <Definition>
+      /
+      ';' ws term:phrase <Definition>
+    end
+
+    rule definition_term_text
+      h:definition_term_word ws r:definition_term_text <Phrase>
+      /
+      h:definition_term_word "" <Phrase>
+    end
+
+    rule definition_term_word
+      bold
+      /
+      italic
+      /
+      link
+      /
+      template
+      /
+      url
+      /
+      plain_word
+      /
+      bold_toggle
+      /
+      italic_toggle
+      /
+      heading_toggle
+      /
+      internal_link_start
+      /
+      internal_link_end
+      /
+      external_link_start
+      /
+      external_link_end
+      /
+      template_start
+      /
+      template_end
+      /
+      arg_delimiter
+    end
+
+    rule verbatim_area
+      h:verbatim rnl r:verbatim_area <VerbatimArea>
+      /
+      h:verbatim "" <VerbatimArea>
+    end
+
+    rule verbatim
+      " " v:(!"\n" .)* <Verbatim>
+    end
+
+    rule horiz_rule
+      # this deviates from how MediaWiki does things.  consider this:
+      #   ---- a para-
+      #   graph
+      # MediaWiki renders (newlines removed): <hr /><p>a para-</p><p>graph</p>
+      # this renders (newlines removed): <hr /><p>a para-graph</p>
+      "----" "-"* ws text? <HorizRule>
+    end
+
+    ##### combination rules
+
+    # a block of normal text, including single newlines but not a special line
+    rule text
+      !line h:phrase ws rnl r:text <Paragraph>
+      /
+      !line h:phrase "" <Paragraph>
+    end
+
+    # a phrase of words without newlines
+    rule phrase
+      h:word ws r:phrase <Phrase>
+      /
+      h:word "" <Phrase>
+    end
+
+    rule word
+      bold
+      /
+      italic
+      /
+      link
+      /
+      template
+      /
+      url
+      /
+      plain_word
+      /
+      delimiter # catch all remaining unmatched delimiters
+    end
+
+    ##### text markup
+
+    rule bold
+      bold_toggle ws bold_enclosed_text ws bold_toggle <Bold>
+    end
+
+    rule bold_enclosed_text
+      h:bold_enclosed_word ws r:bold_enclosed_text <Phrase>
+      /
+      h:bold_enclosed_word "" <Phrase>
+    end
+
+    # things that can be inside bold areas
+    rule bold_enclosed_word
+      italic
+      /
+      link
+      /
+      template
+      /
+      url
+      /
+      plain_word
+      /
+      heading_toggle
+      /
+      internal_link_start
+      /
+      internal_link_end
+      /
+      external_link_start
+      /
+      external_link_end
+      /
+      template_start
+      /
+      template_end
+      /
+      arg_delimiter
+      /
+      term_delimiter
+    end
+
+    rule italic
+      italic_toggle ws italic_enclosed_text ws italic_toggle_no_lookahead <Italic>
+    end
+
+    rule italic_enclosed_text
+      h:italic_enclosed_word ws r:italic_enclosed_text <Phrase>
+      /
+      h:italic_enclosed_word "" <Phrase>
+    end
+
+    # things that can be inside italic areas
+    rule italic_enclosed_word
+      bold
+      /
+      link
+      /
+      template
+      /
+      url
+      /
+      plain_word
+      /
+      heading_toggle
+      /
+      internal_link_start
+      /
+      internal_link_end
+      /
+      external_link_start
+      /
+      external_link_end
+      /
+      template_start
+      /
+      template_end
+      /
+      arg_delimiter
+      /
+      term_delimiter
+    end
+
+    rule link
+      internal_link
+      /
+      external_link
+    end
+
+    # internal links:
+    # [[ link target | link label ]]
+    # * can contain white space
+    # * cannot contain new lines
+    rule internal_link
+      internal_link_start ws t:plain_text ws a:arg_delimiter ws l:internal_link_enclosed_text ws internal_link_end <InternalLink>
+      /
+      internal_link_start ws t:plain_text ws a:arg_delimiter ws internal_link_end <InternalLink>
+      /
+      internal_link_start ws t:plain_text ws internal_link_end <InternalLink>
+    end
+
+    rule internal_link_enclosed_text
+      h:internal_link_enclosed_word ws r:internal_link_enclosed_text <Phrase>
+      /
+      h:internal_link_enclosed_word "" <Phrase>
+    end
+
+    rule internal_link_enclosed_word
+      bold
+      /
+      italic
+      /
+      template
+      /
+      url
+      /
+      plain_word
+      /
+      bold_toggle
+      /
+      italic_toggle
+      /
+      heading_toggle
+      /
+      internal_link_start
+      /
+      external_link_start
+      /
+      external_link_end
+      /
+      template_start
+      /
+      template_end
+      /
+      arg_delimiter
+      /
+      term_delimiter
+    end
+
+    # external links:
+    # [ url label ]
+    # * can contain white space
+    # * cannot contain new lines
+    #
+    # renders differently from MediaWiki:
+    #   [ external [[internal]] ]
+    # MediaWiki: <a href="external"></a><a href="internal">internal</a>
+    # This lib:  <a href="external">[[internal]]</a>
+    rule external_link
+      external_link_start ws t:url rws l:external_link_enclosed_text ws external_link_end <ExternalLink>
+      /
+      external_link_start ws t:url ws external_link_end <ExternalLink>
+      /
+      external_link_start ws t:implicit_url rws l:external_link_enclosed_text ws external_link_end <ExternalLink>
+      /
+      external_link_start ws t:implicit_url ws external_link_end <ExternalLink>
+    end
+
+    rule external_link_enclosed_text
+      h:external_link_enclosed_word ws r:external_link_enclosed_text <Phrase>
+      /
+      h:external_link_enclosed_word "" <Phrase>
+    end
+
+    rule external_link_enclosed_word
+      bold
+      /
+      italic
+      /
+      template
+      /
+      url
+      /
+      plain_word
+      /
+      bold_toggle
+      /
+      italic_toggle
+      /
+      heading_toggle
+      /
+      internal_link_start
+      /
+      internal_link_end
+      /
+      external_link_start
+      /
+      template_start
+      /
+      template_end
+      /
+      arg_delimiter
+      /
+      term_delimiter
+    end
+
+    rule template
+      template_start aws plain_text aws arg_delimiter aws args:arg_list aws template_end <Template>
+      /
+      template_start aws plain_text aws template_end <Template>
+    end
+
+    rule arg_list
+      h:arg aws arg_delimiter aws r:arg_list <Arguments>
+      /
+      h:arg "" <Arguments>
+      /
+      aws "" <Arguments> {
+        def h
+          nil
+        end
+      }
+    end
+
+    # a plain (positional) argument or a named (name=text) argument
+    rule arg
+      name:plain_text aws heading_toggle aws val:arg_list_enclosed_text <Argument>
+      /
+      val:arg_list_enclosed_text "" <Argument>
+    end
+
+    rule arg_list_enclosed_text
+      h:arg_list_enclosed_word aws r:arg_list_enclosed_text <Phrase>
+      /
+      h:arg_list_enclosed_word "" <Phrase>
+    end
+
+    rule arg_list_enclosed_word
+      bold
+      /
+      italic
+      /
+      link
+      /
+      template
+      /
+      url
+      /
+      plain_word
+      /
+      bold_toggle # allow unmatched delimiters after we have ruled out structures
+      /
+      italic_toggle
+      /
+      heading_toggle
+      /
+      internal_link_start
+      /
+      internal_link_end
+      /
+      external_link_start
+      /
+      external_link_end
+      /
+      template_start
+      /
+      term_delimiter
+    end
+
+    # a phrase of plain words
+    rule plain_text
+      h:plain_word ws r:plain_text <Phrase>
+      /
+      h:plain_word "" <Phrase>
+    end
+
+    # avoids using a white-list so that utf-8 characters are accepted
+    #
+    # matches anything up to a delimiter or whitespace
+    rule plain_word
+      (!delimiter ![ \t\r\n] .)+ <Word>
+    end
+
+    ##### delimiters
+
+    # for matching any delimiter, typically in lookahead assertions
+    rule delimiter
+      bold_toggle
+      /
+      italic_toggle
+      /
+      heading_toggle
+      /
+      internal_link_start
+      /
+      internal_link_end
+      /
+      external_link_start
+      /
+      external_link_end
+      /
+      template_start
+      /
+      template_end
+      /
+      arg_delimiter
+      /
+      term_delimiter
+    end
+
+    rule bold_toggle
+      "'''" <Delimiter>
+    end
+
+    rule italic_toggle
+      "''" !"'" <Delimiter> # avoid matching bold toggles
+    end
+
+    rule italic_toggle_no_lookahead
+      "''" <Delimiter>
+    end
+
+  #  rule fixed_toggle
+  #    "||" <Delimiter>
+  #  end
+
+    rule heading_toggle
+      '=' <Delimiter>
+    end
+
+    rule internal_link_start
+      "[[" <Delimiter>
+    end
+
+    rule internal_link_end
+      "]]" <Delimiter>
+    end
+
+    rule external_link_start
+      "[" !"[" <Delimiter> # avoid matching internal link starts
+    end
+
+    rule external_link_end
+      "]" !"]" <Delimiter> # avoid matching internal link ends
+    end
+
+    rule template_start
+      "{{" <Delimiter>
+    end
+
+    rule template_end
+      "}}" <Delimiter>
+    end
+
+    # breaks up arguments in an argument list
+    # for example: {{ template | arg1 | arg2 }}
+    rule arg_delimiter
+      "|" !"|" <Delimiter> # avoid matching fixed-width toggles
+    end
+
+    # signals the break between a definition list term and definition
+    rule term_delimiter
+      ":" <Delimiter>
+    end
+
+    ##### matching URLs
+
+    # unknown scheme URLs
+    # used to match unknown-scheme URLs in URL contexts (like external links)
+    rule implicit_url
+      url_safe_char+ <URL>
+    end
+
+    # parses from a known scheme to the end of URL-safe characters
+    # uses known schemes to parse bare URLs from text
+    rule url
+      scheme ":" url_safe_char+ <URL>
+    end
+
+    # pretty much straight from RFC 1738
+    # additions:
+    # * @, :, / are added because they are valid in some cases (not checked)
+    # * %XX is allowed as a character, these are escaped characters
+    rule url_safe_char
+      !"]" [A-Za-z0-9$-_.+!*'(),@:/]
+      /
+      "%" xdigit xdigit
+    end
+
+    # known-good schemes that we want to recognize as URLs
+    rule scheme
+      "http" "s"? <Protocol>
+      /
+      "mailto" <Protocol>
+      /
+      "ftp" <Protocol>
+    end
+
+    ##### general rules
+
+    # these really don't make sense unless there are specific run-time directives
+    # that the markup user needs access to (such as __NOTOC__).  Not sure if
+    # there will be any.  Also, perhaps a better strategy would be:
+    # * if the line starts with "__" constant_name "__", then parse as magic
+    # * send the magic word through an extensible module of some sort
+    #
+    # this means the magic words wouldn't require grammar changes
+#    rule magic_word
+#      '__' constant_name '__' #<MagicWord>
+#    end
+#
+#    rule constant_name
+#      [A-Z_]+
+#    end
+
+    rule number
+      [1-9] digit* {
+        def to_i
+          text_value.to_i
+        end
+      }
+      /
+      "0" {
+        def to_i
+          0
+        end
+      }
+    end
+
+    # digits
+    rule digit
+      [0-9]
+      /
+      "0"
+    end
+
+    # hex digits
+    rule xdigit
+      [A-Fa-f0-9]
+    end
+
+    # required new lines
+    rule rnl
+      "\n"+
+    end
+
+    # new lines
+    rule nl
+      "\n"*
+    end
+
+    # all white space
+    rule aws
+      [ \t\r\n]*
+    end
+
+    # required white space
+    rule rws
+      [ \t]+
+    end
+
+    # optional white space
+    rule ws
+      [ \t]*
+    end
+
+  end
+end

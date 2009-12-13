@@ -1,0 +1,11 @@
+== Marker
+
+Why?
+* Some users don't want to learn another markup language.  For us, it's easy.  For some, it's the end of the world.  I can't highlight and click?  Fuck.
+
+What?
+It aims to mimic MediaWiki markup, but is purposely different in several areas:
+1. Marker is a grammar-based parser (treetop to be exact), so a lot of corner cases are handled differently (which I think is more consistent).  Examples:
+* ''' bold '' bold-italic? ''' italic ''
+* others from the grammar
+2. 
