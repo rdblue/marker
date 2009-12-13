@@ -11,6 +11,8 @@ SPEC = Gem::Specification.new do |s|
             Dir.glob( 'lib/**/*.rb' ) +
             Dir.glob( 'lib/**/*.treetop' )
 #  s.test_file = 'test/marker_test.rb'
+  s.executables = Dir.glob( 'bin/*' )
   s.has_rdoc = true
   s.extra_rdoc_files = ['README', 'LICENSE']
+  s.add_dependency( 'treetop', '>= 1.4.2' )
 end

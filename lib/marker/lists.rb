@@ -122,7 +122,7 @@ module Marker #:nodoc:
     def to_s( options = {} )
       indent = (options[:indent] || 0)
       '    ' * (indent > 0 ? indent - 1 : 0) +
-      '%2d. ' % options[:num]
+      "#{'%2d' % options[:num]}. #{phrase.to_s( options )}"
     end
 
     def structure
