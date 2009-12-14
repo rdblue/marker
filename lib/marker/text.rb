@@ -33,7 +33,7 @@ module Marker #:nodoc:
     end
 
     def to_s( options = {} )
-      s = h.to_html(options)
+      s = h.to_s(options)
       s << ' ' if space?
       s << r.to_s(options) if r
       s

@@ -17,7 +17,7 @@ module Marker #:nodoc:
     end
 
     def render( format, options = {} )
-      Marker.templates.send( target, format, *arg_list )
+      Marker.templates.send( target, format, *arg_list( format, options ) )
     end
 
     def target
@@ -25,8 +25,8 @@ module Marker #:nodoc:
       t.text_value.gsub(/\s/, '_').to_sym
     end
 
-    def arg_list
-      ( args ? args.to_arg_list : [[], {}] )
+    def arg_list( format, options )
+      ( args ? args.to_arg_list( format, options ) : [[], {}] )
     end
 
     #-- defaults ++
@@ -40,17 +40,31 @@ module Marker #:nodoc:
   end
 
   class Arguments < RecursiveList
-    def to_arg_list
+    def to_arg_list( format, options = {} )
       pos_params = []
       named_params = {}
-      to_a.each do |a|
-        next unless a
-        if a.name
-          named_params[a.name.text_value] = a.val.text_value
-        else
-          pos_params << a.val.text_value
+
+      case format
+      when :html
+        to_a.each do |a|
+          next unless a
+          if a.name
+            named_params[a.name.to_html( options )] = a.val.to_html( options )
+          else
+            pos_params << a.val.to_html( options )
+          end
+        end
+      else
+        to_a.each do |a|
+          next unless a
+          if a.name
+            named_params[a.name.to_s( options )] = a.val.to_s( options )
+          else
+            pos_params << a.val.to_s( options )
+          end
         end
       end
+
       [pos_params, named_params]
     end
 
