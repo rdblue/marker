@@ -6,6 +6,17 @@
 
 require 'treetop'
 
+module Treetop #:nodoc:
+  module Runtime #:nodoc:
+    class SyntaxNode #:nodoc:
+      # returns whether the ParseNode matched any text
+      def present?
+        text_value.any?
+      end
+    end
+  end
+end
+
 module Marker #:nodoc:
   # used to add methods to all parse nodes.
   class ParseNode < Treetop::Runtime::SyntaxNode

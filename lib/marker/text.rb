@@ -9,31 +9,48 @@ require 'marker/common'
 module Marker #:nodoc:
   class Paragraph < RecursiveList
     def to_html( options = {} )
-      "<p>" +
+      '<p>' +
       to_a.map { |p|
         p.to_html(options)
-      }.join(" ") +
-      "</p>"
+      }.join(' ') +
+      '</p>'
     end
 
+    # TODO: add wordwrap
     def to_s( options = {} )
       to_a.map { |p|
         p.to_s(options)
-      }.join(" ")
+      }.join(' ')
     end
   end
 
   class Phrase < RecursiveList
     def to_html( options = {} )
-      to_a.map { |p|
-        p.to_html(options)
-      }.join(' ')
+      s = h.to_html(options)
+      s << ' ' if space?
+      s << r.to_html(options) if r
+      s
     end
 
     def to_s( options = {} )
-      to_a.map { |p|
-        p.to_s(options)
-      }.join(' ')
+      s = h.to_html(options)
+      s << ' ' if space?
+      s << r.to_s(options) if r
+      s
+    end
+
+    # returns true if there was white space after the first "word"
+    def space?
+      (ws and ws.present?) or (aws and aws.present?)
+    end
+
+    #-- defaults ++
+    def ws
+      nil
+    end
+
+    def aws
+      nil
     end
   end
 

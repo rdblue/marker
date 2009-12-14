@@ -2,3 +2,7 @@
 
 require 'rubygems'
 require 'marker'
+
+ARGV.each do |f|
+  Marker.parse_file( f ).to_html
+end

@@ -23,5 +23,16 @@ require 'marker/verbatim'
 require 'marker/language'
 
 #:include:README
-module Markup
+module Marker
+  def self.parser
+    LanguageParser.new
+  end
+
+  def self.parse( markup )
+    parser.parse( markup )
+  end
+
+  def self.parse_file( filename )
+    parser.parse( File.read( filename ) )
+  end
 end
