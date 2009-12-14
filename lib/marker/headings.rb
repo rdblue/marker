@@ -15,11 +15,11 @@ module Marker #:nodoc:
       sn = s.text_value.size - d
       en = e.text_value.size - d
       if sn > 0
-        "<h#{d}>#{'=' * sn} #{label}</h#{d}>"
+        "<h#{d}>#{'=' * sn} #{label( :html, options )}</h#{d}>"
       elsif en > 0
-        "<h#{d}>#{label} #{'=' * en}</h#{d}>"
+        "<h#{d}>#{label( :html, options )} #{'=' * en}</h#{d}>"
       else
-        "<h#{d}>#{label}</h#{d}>"
+        "<h#{d}>#{label( :html, options )}</h#{d}>"
       end
     end
 
@@ -42,11 +42,11 @@ module Marker #:nodoc:
       en = e.text_value.size - d
 
       l = if sn > 0
-        "#{'=' * sn} #{label}"
+        "#{'=' * sn} #{label( :text, options )}"
       elsif en > 0
-        "#{label} #{'=' * en}"
+        "#{label( :text, options )} #{'=' * en}"
       else
-        label
+        label( :text, options )
       end
 
       case d
@@ -62,8 +62,13 @@ module Marker #:nodoc:
       end
     end
 
-    def label( options = {} )
-      l.text_value
+    def label( format, options = {} )
+      case format
+      when :html
+        l.to_html( options )
+      else
+        l.to_s( options )
+      end
     end
 
     #-- defaults ++

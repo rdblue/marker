@@ -9,17 +9,17 @@ require 'marker/common'
 module Marker #:nodoc:
   class InternalLink < ParseNode
     def to_html( options = {} )
-      "<a href='#{path(options)}'>#{label(options)}</a>"
+      "<a href='#{path(options)}'>#{label(:html, options)}</a>"
     end
 
     def to_s( options = {} )
       f = options[:footnotes]
       if f
-        l = label(options)
+        l = label(:text, options)
         n = f.add( path(options), l )
         "#{l} [#{n}]"
       else
-        "#{label(options)} [#{path}]"
+        "#{label(:text, options)} [#{path}]"
       end
     end
 
@@ -29,9 +29,14 @@ module Marker #:nodoc:
       p += '/' + target
     end
 
-    def label( options = {} )
+    def label( format, options = {} )
       if l
-        l.to_html(options)
+        case format
+        when :html
+          l.to_html(options)
+        else
+          l.to_s(options)
+        end
       else
         if a
           # an arg delimiter was present, but without a label
@@ -68,7 +73,7 @@ module Marker #:nodoc:
   class ExternalLink < ParseNode
     def to_html( options = {} )
       if l
-        "<a href='#{target}'>#{label(options)}</a>"
+        "<a href='#{target}'>#{label(:html, options)}</a>"
       else
         f = options[:footnotes]
         if f
@@ -84,10 +89,10 @@ module Marker #:nodoc:
       f = options[:footnotes]
       if l
         if f
-          n = f.add( target, label(options) )
-          "#{label(options)} [#{n}]"
+          n = f.add( target, label(:text, options) )
+          "#{label(:text, options)} [#{n}]"
         else
-          "#{label(options)} [#{target}]"
+          "#{label(:text, options)} [#{target}]"
         end
       else
         if f
@@ -99,9 +104,14 @@ module Marker #:nodoc:
       end
     end
 
-    def label( options = {} )
+    def label( format, options = {} )
       if l
-        l.to_html(options)
+        case format
+        when :html
+          l.to_html(options)
+        else
+          l.to_s(options)
+        end
       else
         ''
       end
