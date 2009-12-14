@@ -1,8 +1,59 @@
 #!/usr/bin/env ruby
 
+require 'optparse'
+require 'ostruct'
 require 'rubygems'
-require 'marker'
+
+begin
+  require 'marker'
+rescue LoadError
+  $: << File.join( File.dirname(__FILE__), '..', 'lib' )
+  require 'marker'
+end
+
+options = OpenStruct.new
+options.format = :text
+OptionParser.new do |opts|
+  opts.on( '--format FORMAT', [:text, :html],
+        'Specify the output format (text, html)' ) do |format|
+    options.format = format
+  end
+  opts.on_tail('-h', '--help', 'Show this message') do
+    puts opts
+    exit
+  end
+end.parse!
+
+files = {}
+
+if ARGV.empty? or ARGV.include? '-'
+  s = ''
+  # the parser expects a full block of text, grab it all
+  $stdin.each_line { |l| s << l }
+  files[:stdin] = Marker.parse( s )
+end
 
 ARGV.each do |f|
-  Marker.parse_file( f ).to_html
+  next if f == '-'
+  files[f] = Marker.parse_file( f )
+end
+
+if files.size > 1
+  files.each do |f, t|
+    puts "\n==> #{f} <=="
+    case options.format
+    when :html
+      puts t.to_html
+    else
+      puts t
+    end
+  end
+else
+  # only one, so leave out the file name
+  case options.format
+  when :html
+    puts files.values.first.to_html
+  else
+    puts files.values.first
+  end
 end

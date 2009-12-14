@@ -9,7 +9,7 @@ require 'marker/common'
 module Marker #:nodoc:
   class Markup < RecursiveList
     def to_html( options = {} )
-      options[:footnotes] = Footnotes.new
+      options = make_options( options )
 
       [
         to_a.map{ |b|
@@ -19,13 +19,21 @@ module Marker #:nodoc:
     end
 
     def to_s( options = {} )
-      options[:footnotes] = Footnotes.new
+      options = make_options( options )
 
       [
         to_a.map{ |b|
           b.to_s(options)
         }, options[:footnotes].to_s( options )
       ].flatten.join("\n")
+    end
+
+    def make_options( user_options )
+      o = Marker.render_options.dup
+      o.merge!( :link_base => Marker.link_base )
+      o.merge!( :footnotes => Footnotes.new ) unless user_options[:nofootnotes]
+      o.merge!( user_options )
+      o
     end
   end
 

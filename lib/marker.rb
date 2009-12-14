@@ -39,26 +39,40 @@ module Marker
       @@templates = Marker::DefaultTemplates.extend( mod )
     end
 
-    def templates
+    def templates #:nodoc:
       @@templates ||= Marker::DefaultTemplates
     end
 
+    # Sets the base url for internal links.  If not set, internal links will
+    # begin with '/'
+    def link_base=( url )
+      @@link_base = url
+    end
+
+    def link_base #:nodoc:
+      @@link_base ||= ''
+    end
+
+    # sets the default options used when rendering markup
     def render_options=( options )
       @@render_options = options
     end
 
-    def render_options
-      @@render_options
+    def render_options #:nodoc:
+      @@render_options ||= {}
     end
 
+    # Returns a Marker markup parser instance (Marker::LanguageParser)
     def parser
       @@parser ||= LanguageParser.new
     end
 
+    # Parses the given +markup+ string and returns the result
     def parse( markup )
       parser.parse( markup )
     end
 
+    # Parses markup read from the file +filename+ and returns the result
     def parse_file( filename )
       parser.parse( File.read( filename ) )
     end
