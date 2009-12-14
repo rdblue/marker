@@ -8,13 +8,21 @@ require 'marker/common'
 
 module Marker #:nodoc:
   class Template < ParseNode
-    # TODO: write me
     def to_html( options = {} )
-      "render:#{plain_text}(#{args ? args.to_html(options) : ''})"
+      render( :html, options )
     end
 
     def to_s( options = {} )
-      "render:#{plain_text}(#{args ? args.to_s(options) : ''})"
+      render( :text, options )
+    end
+
+    def render( format, options = {} )
+      Marker.templates.send( target, format, *arg_list )
+    end
+
+    def target
+      # sanitize the string to get a method name
+      t.text_value.gsub(/\s/, '_').to_sym
     end
 
     def arg_list
@@ -22,6 +30,10 @@ module Marker #:nodoc:
     end
 
     #-- defaults ++
+    def t #:nodoc:
+      nil
+    end
+
     def args #:nodoc:
       nil
     end
@@ -32,12 +44,14 @@ module Marker #:nodoc:
       pos_params = []
       named_params = {}
       to_a.each do |a|
+        next unless a
         if a.name
-          named_params[a.name] = a.val
+          named_params[a.name.text_value] = a.val.text_value
         else
-          pos_params << a.val
+          pos_params << a.val.text_value
         end
       end
+      [pos_params, named_params]
     end
 
     def to_html( options = {} )
@@ -55,7 +69,7 @@ module Marker #:nodoc:
 
   class Argument < ParseNode
     def to_html( options = {} )
-      ( name ? "'#{name}' => '#{val}'" : "'#{val}'" )
+      to_s
     end
 
     def to_s( options = {} )
@@ -65,6 +79,13 @@ module Marker #:nodoc:
     #-- defaults ++
     def name #:nodoc:
       nil
+    end
+  end
+
+  # A set of basic templates for rendering
+  module DefaultTemplates
+    def self.method_missing( sym, *args )
+      "render:#{sym}( #{args.map(&:inspect).join(', ')} )"
     end
   end
 end

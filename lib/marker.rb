@@ -24,15 +24,43 @@ require 'marker/language'
 
 #:include:README
 module Marker
-  def self.parser
-    LanguageParser.new
-  end
+  class << self
+    # Adds the instance methods of +mod+ to the templates that will be used
+    # when rendering text.
+    #
+    #   module Templates
+    #     # defines {{ name }}
+    #     def name( format, positional_array, named_hash )
+    #       # return a string!
+    #     end
+    #   end
+    #   Marker.templates = Templates
+    def templates=( mod )
+      @@templates = Marker::DefaultTemplates.extend( mod )
+    end
 
-  def self.parse( markup )
-    parser.parse( markup )
-  end
+    def templates
+      @@templates ||= Marker::DefaultTemplates
+    end
 
-  def self.parse_file( filename )
-    parser.parse( File.read( filename ) )
+    def render_options=( options )
+      @@render_options = options
+    end
+
+    def render_options
+      @@render_options
+    end
+
+    def parser
+      @@parser ||= LanguageParser.new
+    end
+
+    def parse( markup )
+      parser.parse( markup )
+    end
+
+    def parse_file( filename )
+      parser.parse( File.read( filename ) )
+    end
   end
 end

@@ -416,9 +416,9 @@ module Marker
     end
 
     rule template
-      template_start aws plain_text aws arg_delimiter aws args:arg_list aws template_end <Template>
+      template_start aws t:plain_text aws arg_delimiter aws args:arg_list aws template_end <Template>
       /
-      template_start aws plain_text aws template_end <Template>
+      template_start aws t:plain_text aws template_end <Template>
     end
 
     rule arg_list
