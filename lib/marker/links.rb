@@ -136,9 +136,11 @@ module Marker #:nodoc:
   end
 
   class URL < ParseNode
+    #--
     # TODO: these should output links just like "[url]".  The link tags
     # shouldn't call these methods, these are called when the URL is not in a
     # link.  The link templates should grab the URL themselves.
+    #++
     def to_html( options = {} )
       text_value
     end

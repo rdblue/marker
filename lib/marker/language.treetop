@@ -312,6 +312,7 @@ module Marker
     # [[ link target | link label ]]
     # * can contain white space
     # * cannot contain new lines
+    #-- TODO: handle [[ url | label ]] and variants ++
     rule internal_link
       internal_link_start ws t:plain_text ws a:arg_delimiter ws l:internal_link_enclosed_text ws internal_link_end <InternalLink>
       /
@@ -366,7 +367,7 @@ module Marker
     # renders differently from MediaWiki:
     #   [ external [[internal]] ]
     # MediaWiki: <a href="external"></a><a href="internal">internal</a>
-    # This lib:  <a href="external">[[internal]]</a>
+    # Marker:  <a href="external">[[internal]]</a>
     rule external_link
       external_link_start ws t:url rws l:external_link_enclosed_text ws external_link_end <ExternalLink>
       /
@@ -650,12 +651,16 @@ module Marker
       [A-Fa-f0-9]
     end
 
+    #-- TODO: Handle windows newlines (\r\n) ++
+
     # required new lines
+    # just one!
     rule rnl
-      "\n"+
+      "\n"
     end
 
     # new lines
+    #-- TODO: should this be broken into exactly one and any number rules? ++
     rule nl
       "\n"*
     end
