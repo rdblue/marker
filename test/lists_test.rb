@@ -14,7 +14,7 @@ class ListTest < Test::Unit::TestCase
     text = "* List item 1\n** List item 2\n* List item 3"
     markup = Marker.parse text
     
-    assert_match("<ul><li>List item 1<ul><li>List item 2</li></ul></li><li>List item 3</li></ul>", markup.to_html)
+    assert_match("<ul><li>List item 1</li><ul><li>List item 2</li></ul><li>List item 3</li></ul>", markup.to_html)
   end
 
   def test_numbered_list
@@ -28,7 +28,7 @@ class ListTest < Test::Unit::TestCase
     text = "# List item 1\n## List item 2\n# List item 3"
     markup = Marker.parse text
     
-    assert_match("<ol><li>List item 1<ol><li>List item 2</li></ol></li><li>List item 3</li></ol>", markup.to_html)
+    assert_match("<ol><li>List item 1</li><ol><li>List item 2</li></ol><li>List item 3</li></ol>", markup.to_html)
   end
 
   def test_mixed_list
@@ -39,10 +39,10 @@ class ListTest < Test::Unit::TestCase
   end
 
   def test_nested_mixed_list
-    text = "# List item 1\n** List item 2\n# List item 3\n## List item 4"
+    text = "# List item 1\n#* List item 2\n# List item 3\n## List item 4"
     markup = Marker.parse text
     
-    assert_match("<ol><li>List item 1<ul><li>List item 2</li></ul></li><li>List item 3<ol><li>List item 4</li></ol></li></ol>", markup.to_html)
+    assert_match("<ol><li>List item 1</li><ul><li>List item 2</li></ul><li>List item 3</li><ol><li>List item 4</li></ol></ol>", markup.to_html)
   end
 
 end
