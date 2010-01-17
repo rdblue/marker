@@ -183,7 +183,9 @@ module Marker
       #   graph
       # MediaWiki renders (newlines removed): <hr /><p>a para-</p><p>graph</p>
       # this renders (newlines removed): <hr /><p>a para-graph</p>
-      "----" "-"* ws text? <HorizRule>
+      "----" "-"* ws t:unsafe_text <HorizRule>
+      /
+      "----" "-"* <HorizRule>
     end
 
     ##### combination rules
@@ -193,6 +195,20 @@ module Marker
       !line h:phrase ws rnl r:text <Paragraph>
       /
       !line h:phrase "" <Paragraph>
+    end
+
+    # a block of text that does not require a !line check
+    #
+    # for situations where text may follow structures that are normally on a
+    # single line---e.g., horizontal rules--- the text should be handled like a
+    # paragraph on a new line, but using the text rule will cause errors when
+    # the text starts like a special line: cases like this: "---- ----".
+    # Because it follows a structure without a new line, it is safe to assume
+    # the text is a phrase.
+    rule unsafe_text
+      h:phrase ws rnl r:text <Paragraph>
+      /
+      h:phrase "" <Paragraph>
     end
 
     # a phrase of words without newlines

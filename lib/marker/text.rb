@@ -76,12 +76,18 @@ module Marker #:nodoc:
 
   class HorizRule < ParseNode
     def to_html( options = {} )
-      "<hr />"
+      "<hr />" +
+      ( t ? "\n#{t.to_html(options)}" : "" )
     end
 
     def to_s( options = {} )
       width = options[:width] || 80
-      "-" * width
+      "-" * width +
+      ( t ? "\n#{t.to_s(options)}" : "" )
+    end
+
+    def t
+      nil
     end
   end
 

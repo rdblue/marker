@@ -93,7 +93,7 @@ class FormattingTest < Test::Unit::TestCase
     text = "---- ----"
     markup = Marker.parse text
     
-    assert_match("<hr />\n----", markup.to_html)
+    assert_match("<hr />\n<p>----</p>", markup.to_html)
   end
 
 end
