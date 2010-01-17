@@ -80,7 +80,7 @@ module Marker #:nodoc:
           n = f.add( target )
           "<a href='#{target}'>[#{n}]</a>"
         else
-          "<a href='#{target}'></a>"
+          "<a href='#{target}'>#{target}</a>"
         end
       end
     end
@@ -136,16 +136,28 @@ module Marker #:nodoc:
   end
 
   class URL < ParseNode
-    #--
-    # TODO: these should output links just like "[url]".  The link tags
-    # shouldn't call these methods, these are called when the URL is not in a
-    # link.  The link templates should grab the URL themselves.
-    #++
     def to_html( options = {} )
-      text_value
+      f = options[:footnotes]
+      if f
+        n = f.add( bare_url )
+        "<a href='#{bare_url}'>[#{n}]</a>"
+      else
+        "<a href='#{bare_url}'>#{bare_url}</a>"
+      end
     end
 
     def to_s( options = {} )
+      f = options[:footnotes]
+      if f
+        n = f.add( bare_url )
+        "[#{n}]"
+      else
+        bare_url
+      end
+    end
+
+    # returns just the URL that was matched
+    def bare_url
       text_value
     end
   end
