@@ -74,6 +74,17 @@ module Marker #:nodoc:
     end
   end
 
+  class HorizRule < ParseNode
+    def to_html( options = {} )
+      "<hr />"
+    end
+
+    def to_s( options = {} )
+      width = options[:width] || 80
+      "-" * width
+    end
+  end
+
   class Bold < ParseNode
     def to_html( options = {} )
       "<b>#{bold_enclosed_text.to_html(options)}</b>"

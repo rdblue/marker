@@ -34,15 +34,4 @@ module Marker #:nodoc:
       v.text_value
     end
   end
-
-  class HorizRule < ParseNode
-    def to_html( options = {} )
-      "<hr />"
-    end
-
-    def to_s( options = {} )
-      width = options[:width] || 80
-      "-" * width
-    end
-  end
 end
