@@ -80,4 +80,20 @@ class FormattingTest < Test::Unit::TestCase
 
     assert_match("<p>word1 word2 word3</p>", markup.to_html)
   end
+
+  def test_horizontal_rule
+    text = "----"
+    markup = Marker.parse text
+    
+    assert_match("<hr />\n", markup.to_html)
+  end
+
+  # FIXME: throws NoMethodError
+  def test_invalid_horizontal_rule
+    text = "---- ----"
+    markup = Marker.parse text
+    
+    assert_match("<hr />\n----", markup.to_html)
+  end
+
 end
