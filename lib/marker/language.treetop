@@ -350,8 +350,6 @@ module Marker
       /
       template
       /
-      url
-      /
       plain_word
       /
       bold_toggle
@@ -442,12 +440,6 @@ module Marker
       h:arg aws arg_delimiter aws r:arg_list <Arguments>
       /
       h:arg "" <Arguments>
-      /
-      aws "" <Arguments> {
-        def h
-          nil
-        end
-      }
     end
 
     # a plain (positional) argument or a named (name=text) argument
@@ -455,6 +447,8 @@ module Marker
       name:plain_text aws heading_toggle aws val:arg_list_enclosed_text <Argument>
       /
       val:arg_list_enclosed_text "" <Argument>
+      /
+      "" "" <Argument>
     end
 
     rule arg_list_enclosed_text

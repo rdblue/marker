@@ -88,7 +88,6 @@ class FormattingTest < Test::Unit::TestCase
     assert_match("<hr />\n", markup.to_html)
   end
 
-  # FIXME: throws NoMethodError
   def test_invalid_horizontal_rule
     text = "---- ----"
     markup = Marker.parse text

@@ -48,19 +48,21 @@ module Marker #:nodoc:
       when :html
         to_a.each do |a|
           next unless a
+          value = ( a.val ? a.val.to_html(options) : "" )
           if a.name
-            named_params[a.name.to_html( options )] = a.val.to_html( options )
+            named_params[a.name.to_s(options)] = value
           else
-            pos_params << a.val.to_html( options )
+            pos_params << value
           end
         end
       else
         to_a.each do |a|
           next unless a
+          value = ( a.val ? a.val.to_s(options) : "" )
           if a.name
-            named_params[a.name.to_s( options )] = a.val.to_s( options )
+            named_params[a.name.to_s(options)] = value
           else
-            pos_params << a.val.to_s( options )
+            pos_params << value
           end
         end
       end
@@ -92,6 +94,10 @@ module Marker #:nodoc:
 
     #-- defaults ++
     def name #:nodoc:
+      nil
+    end
+
+    def val
       nil
     end
   end
