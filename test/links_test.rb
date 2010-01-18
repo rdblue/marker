@@ -34,6 +34,20 @@ class LinkTest < Test::Unit::TestCase
     assert_match("<a href='/Example page'>Example page</a>", markup.to_html)
   end
 
+  def test_internal_with_url
+    text = "[[http://www.example.com]]"
+    markup = Marker.parse text
+    assert_match("<p><a href='http://www.example.com'>[1]</a></p>\n<ol><li><a href='http://www.example.com'>http://www.example.com</a></li></ol>", markup.to_html)
+
+    text = "[[http://www.example.com|Example page]]"
+    markup = Marker.parse text
+    assert_match("<a href='http://www.example.com'>Example page</a>", markup.to_html)
+
+    text = "[[http://www.example.com Example page]]"
+    markup = Marker.parse text
+    assert_match("<a href='http://www.example.com'>Example page</a>", markup.to_html)
+  end
+
   def test_external_link_with_alias
     text = "[http://www.example.com Example link]"
     markup = Marker.parse text

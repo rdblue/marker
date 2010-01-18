@@ -382,14 +382,23 @@ module Marker
     #   [ external [[internal]] ]
     # MediaWiki: <a href="external"></a><a href="internal">internal</a>
     # Marker:  <a href="external">[[internal]]</a>
+    #
+    # also use this rule to match bad internal link syntax [[ url | label ]]
+    # because the rendering rules are the same
     rule external_link
-      external_link_start ws t:url rws l:external_link_enclosed_text ws external_link_end <ExternalLink>
-      /
-      external_link_start ws t:url ws external_link_end <ExternalLink>
-      /
+#      external_link_start ws t:url rws l:external_link_enclosed_text ws external_link_end <ExternalLink>
+#      /
+#      external_link_start ws t:url ws external_link_end <ExternalLink>
+#      /
       external_link_start ws t:implicit_url rws l:external_link_enclosed_text ws external_link_end <ExternalLink>
       /
       external_link_start ws t:implicit_url ws external_link_end <ExternalLink>
+      /
+      internal_link_start ws t:implicit_url rws l:internal_link_enclosed_text ws internal_link_end <ExternalLink>
+      /
+      internal_link_start ws t:implicit_url ws arg_delimiter ws l:internal_link_enclosed_text ws internal_link_end <ExternalLink>
+      /
+      internal_link_start ws t:implicit_url ws internal_link_end <ExternalLink>
     end
 
     rule external_link_enclosed_text
