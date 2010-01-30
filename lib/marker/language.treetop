@@ -7,9 +7,9 @@
 module Marker
   grammar Language
     rule markup
-      h:block rnl r:markup <Markup>
+      h:block ws rnl r:markup <Markup>
       /
-      h:block "" <Markup>
+      h:block ws <Markup>
     end
 
     rule block
@@ -87,9 +87,9 @@ module Marker
 
     # a series of list items, so they can be coalesced
     rule list
-      h:list_item rnl r:list <List>
+      h:list_item ws rnl r:list <List>
       /
-      h:list_item "" <List>
+      h:list_item ws <List>
     end
 
     # for matching any list item
@@ -194,7 +194,7 @@ module Marker
     rule text
       !line h:phrase ws rnl r:text <Paragraph>
       /
-      !line h:phrase "" <Paragraph>
+      !line h:phrase ws <Paragraph>
     end
 
     # a block of text that does not require a !line check
@@ -208,7 +208,7 @@ module Marker
     rule unsafe_text
       h:phrase ws rnl r:text <Paragraph>
       /
-      h:phrase "" <Paragraph>
+      h:phrase ws <Paragraph>
     end
 
     # a phrase of words without newlines

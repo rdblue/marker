@@ -95,4 +95,14 @@ class FormattingTest < Test::Unit::TestCase
     assert_match("<hr />\n<p>----</p>", markup.to_html)
   end
 
+  def test_trailing_spaces
+    text = "text "
+    markup = Marker.parse text
+    assert_match("<p>text</p>", markup.to_html)
+
+    text = "a line of text "
+    markup = Marker.parse text
+    assert_match("<p>a line of text</p>", markup.to_html)
+  end
+
 end
