@@ -612,8 +612,9 @@ module Marker
     # additions:
     # * @, :, / are added because they are valid in some cases (not checked)
     # * %XX is allowed as a character, these are escaped characters
+    # * '#' is added for HTML anchors
     rule url_safe_char
-      !"]" [A-Za-z0-9$-_.+!*'(),@:/]
+      !"]" [A-Za-z0-9$-_.+!*'(),@:/#]
       /
       "%" xdigit xdigit
     end
@@ -679,7 +680,6 @@ module Marker
     end
 
     # new lines
-    #-- TODO: should this be broken into exactly one and any number rules? ++
     rule nl
       "\n"*
     end

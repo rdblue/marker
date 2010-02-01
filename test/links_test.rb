@@ -55,6 +55,13 @@ class LinkTest < Test::Unit::TestCase
     assert_match("<a href='http://www.example.com'>Example link</a>", markup.to_html)
   end
 
+  def test_external_link_with_anchor
+    text = "[http://www.example.com/page#anchor Example link]"
+    markup = Marker.parse text
+    
+    assert_match("<a href='http://www.example.com/page#anchor'>Example link</a>", markup.to_html)
+  end
+
   def test_bare_external_link
     text = "[http://www.example.com]"
     markup = Marker.parse text
@@ -91,10 +98,24 @@ class LinkTest < Test::Unit::TestCase
   end
 
   def test_bare_url
-    text = "http://www.example.com"
+    text = "http://www.example.com following text"
     markup = Marker.parse text
     
-    assert_match("<p><a href='http://www.example.com'>[1]</a></p>\n<ol><li><a href='http://www.example.com'>http://www.example.com</a></li></ol>", markup.to_html)
+    assert_match("<p><a href='http://www.example.com'>[1]</a> following text</p>\n<ol><li><a href='http://www.example.com'>http://www.example.com</a></li></ol>", markup.to_html)
+  end
+
+  def test_bare_url_with_encodings
+    text = "http://www.example.com/page?input=%28%29 following text"
+    markup = Marker.parse text
+    
+    assert_match("<p><a href='http://www.example.com/page?input=%28%29'>[1]</a> following text</p>\n<ol><li><a href='http://www.example.com/page?input=%28%29'>http://www.example.com/page?input=%28%29</a></li></ol>", markup.to_html)
+  end
+
+  def test_bare_url_with_anchor
+    text = "http://www.example.com/page#anchor following text"
+    markup = Marker.parse text
+    
+    assert_match("<p><a href='http://www.example.com/page#anchor'>[1]</a> following text</p>\n<ol><li><a href='http://www.example.com/page#anchor'>http://www.example.com/page#anchor</a></li></ol>", markup.to_html)
   end
 
   def test_multiple_footnotes
