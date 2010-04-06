@@ -614,7 +614,7 @@ module Marker
     # * %XX is allowed as a character, these are escaped characters
     # * '#' is added for HTML anchors
     rule url_safe_char
-      !"]" [A-Za-z0-9$-_.+!*'(),@:/#]
+      !"]" [A-Za-z0-9$-_.+!?*'(),@:/#]
       /
       "%" xdigit xdigit
     end

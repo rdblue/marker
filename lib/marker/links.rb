@@ -137,23 +137,17 @@ module Marker #:nodoc:
 
   class URL < ParseNode
     def to_html( options = {} )
-      f = options[:footnotes]
-      if f
-        n = f.add( bare_url )
-        "<a href='#{bare_url}'>[#{n}]</a>"
+      url = bare_url
+      if url =~ /[.,!?:]$/
+        "<a href='#{url[0...-1]}'>#{url[0...-1]}</a>#{url[-1]}"
       else
-        "<a href='#{bare_url}'>#{bare_url}</a>"
+        "<a href='#{url}'>#{url}</a>"
       end
     end
 
     def to_s( options = {} )
-      f = options[:footnotes]
-      if f
-        n = f.add( bare_url )
-        "[#{n}]"
-      else
-        bare_url
-      end
+      # no need to worry about trailing punctuation since it's all text.
+      bare_url
     end
 
     # returns just the URL that was matched
