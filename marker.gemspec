@@ -3,7 +3,7 @@ require 'rubygems'
 SPEC = Gem::Specification.new do |s|
   s.name = 'marker'
   s.summary = 'A markup parser that outputs html and text.  Syntax is similar to MediaWiki.'
-  s.version = '0.2.2'
+  s.version = '0.3.0'
   s.author = 'Ryan Blue'
   s.email = 'rdblue@gmail.com'
   s.homepage = 'http://github.com/rdblue/marker'
