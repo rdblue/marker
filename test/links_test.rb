@@ -37,7 +37,7 @@ class LinkTest < Test::Unit::TestCase
   def test_internal_with_url
     text = "[[http://www.example.com]]"
     markup = Marker.parse text
-    assert_match("<p><a href='http://www.example.com'>[1]</a></p>\n<ol><li><a href='http://www.example.com'>http://www.example.com</a></li></ol>", markup.to_html)
+    assert_match("<p><a href='http://www.example.com'>[1]</a></p>\n<ol class='footnotes'><li><a href='http://www.example.com'>http://www.example.com</a></li></ol>", markup.to_html)
 
     text = "[[http://www.example.com|Example page]]"
     markup = Marker.parse text
@@ -66,7 +66,7 @@ class LinkTest < Test::Unit::TestCase
     text = "[http://www.example.com]"
     markup = Marker.parse text
 
-    assert_match("<p><a href='http://www.example.com'>[1]</a></p>\n<ol><li><a href='http://www.example.com'>http://www.example.com</a></li></ol>", markup.to_html)
+    assert_match("<p><a href='http://www.example.com'>[1]</a></p>\n<ol class='footnotes'><li><a href='http://www.example.com'>http://www.example.com</a></li></ol>", markup.to_html)
   end
 
   def test_nested_links
@@ -134,7 +134,7 @@ class LinkTest < Test::Unit::TestCase
 
     # TODO: should this collect identical links into one footnote?
     assert_match("<p><a href='http://www.example.com'>[1]</a> <a href='http://www.example.com'>[2]</a></p>\n" +
-        "<ol><li><a href='http://www.example.com'>http://www.example.com</a></li><li><a href='http://www.example.com'>http://www.example.com</a></li></ol>", markup.to_html)
+        "<ol class='footnotes'><li><a href='http://www.example.com'>http://www.example.com</a></li><li><a href='http://www.example.com'>http://www.example.com</a></li></ol>", markup.to_html)
   end
 
 end
