@@ -11,7 +11,7 @@ module Treetop #:nodoc:
     class SyntaxNode #:nodoc:
       # returns whether the ParseNode matched any text
       def present?
-        text_value.any?
+        not text_value.empty?
       end
     end
   end
