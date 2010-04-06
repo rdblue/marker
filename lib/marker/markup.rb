@@ -50,7 +50,7 @@ module Marker #:nodoc:
     def to_html( options = {} )
       return "" unless notes.any?
 
-      "<ol>" +
+      "<ol class='footnotes'>" +
       notes.map { |n|
         target = n.shift
         if n.any?
