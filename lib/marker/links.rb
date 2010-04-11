@@ -139,7 +139,7 @@ module Marker #:nodoc:
     def to_html( options = {} )
       url = bare_url
       if url =~ /[.,!?:]$/
-        "<a href='#{url[0...-1]}'>#{url[0...-1]}</a>#{url[-1]}"
+        "<a href='#{url[0...-1]}'>#{url[0...-1]}</a>#{url[-1,1]}"
       else
         "<a href='#{url}'>#{url}</a>"
       end
