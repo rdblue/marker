@@ -671,17 +671,19 @@ module Marker
       [A-Fa-f0-9]
     end
 
-    #-- TODO: Handle windows newlines (\r\n) ++
-
     # required new lines
     # just one!
     rule rnl
-      "\n"
+      "\r\n" # windows
+      /
+      "\n" # linux/unix
+      /
+      "\r" # mac
     end
 
     # new lines
     rule nl
-      "\n"*
+      [\r\n]*
     end
 
     # all white space
