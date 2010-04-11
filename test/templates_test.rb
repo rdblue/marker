@@ -22,7 +22,10 @@ class TemplatesTest < Test::Unit::TestCase
     markup = Marker.parse text
     
     # might want to fix this assertion, the hash could come out in any order
-    assert_match("<p>render:template( :html, [], {\"two\"=>\"2\", \"one\"=>\"1\"} )</p>", markup.to_html)
+    assert_match("<p>render:template( :html, [], {", markup.to_html)
+    assert_match("\"two\"=>\"2\"", markup.to_html)
+    assert_match("\"one\"=>\"1\"", markup.to_html)
+    assert_match("} )</p>", markup.to_html)
   end
 
   def test_mixed_args
