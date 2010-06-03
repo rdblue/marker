@@ -70,6 +70,12 @@ If no template method is found, the template call is printed for debugging:
  >> puts Marker.parse( '{{t|one|two|name=val}}' ).to_s
  render:t( :text, ["one", "two"], {"name"=>"val"} )
 
+Template names from markup are converted to lower case and have spaces replaced
+with underscores to match ruby method naming conventions and to be case
+insensitive for markup writers.  For example,
+ "{{ My Template }}"  => :my_template
+ "{{NaMe}}"           => :name
+
 === Internal Links
 
 Internal links are implemented as links with default prefixes.  The link prefix
@@ -90,6 +96,11 @@ The link base can also be given as a render option.
 (write me)
 
 == Command Line Program
+
+Marker comes with a command-line program that will render both HTML and text.
+If no input file is given, it reads from stdin.
+
+ Usage: marker [--format (html|text)] [input-file]
 
 == License
 
