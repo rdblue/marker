@@ -22,7 +22,7 @@ module Marker #:nodoc:
 
     def target
       # sanitize the string to get a method name
-      t.text_value.gsub(/\s/, '_').to_sym
+      t.text_value.downcase.gsub(/\s/, '_').to_sym
     end
 
     def arg_list( format, options )
