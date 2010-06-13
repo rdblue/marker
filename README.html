@@ -1,0 +1,134 @@
+<p>        <style>
+        a {
+          color: #CC0000;
+          text-decoration: none;
+        }
+
+        a:hover {
+          text-decoration: underline;
+        }
+
+        h1, h2, hr {
+          border: 0;
+          border-bottom: 1px solid #BABDB6;
+        }
+
+        div.indent, ol, ul, dl {
+          padding-left: 2.5em;
+          margin: 0em;
+        }
+
+        ol.footnotes {
+          margin-left: 1em;
+          border-left: 1px solid #BABDB6;
+        }
+
+        pre {
+          margin: 0.5em;
+          padding: 0.5em;
+          border: 1px dashed #BABDB6;
+          background-color: #EEEEEC;
+          -moz-border-radius: 3px;
+        }
+        </style>
+</p>
+
+<h1>Marker</h1>
+
+<p>Marker is a markup language parser designed for two needs:</p>
+<ol><li>Need to mimic MediaWiki syntax</li><li>Need to provide multiple output formats</li></ol>
+
+<p>Mimicing MediaWiki syntax is not exact. One reason is that the MediaWiki parser itself is very complicated and handles many cases specially. It would be very difficult to exactly copy the MediaWiki parser and it probably wouldn't be worth the time because MediaWiki is intended for a wiki and needs to be adapted to be used as a markup lanaguage--especially for multiple output formats. The purpose of mimicing MediaWiki syntax is so that users don't have to learn more than one markup language, so the implementation doesn't <i>need</i> to be exact anyway.</p>
+
+<p>Marker differs from MediaWiki in several ways, because it is a grammar-based implementation. The grammar is written as a <a href='http://treetop.rubyforge.org/'>Treetop</a> parsing expression grammar (<a href='http://en.wikipedia.org/wiki/Parsing_expression_grammar'>PEG</a>).</p>
+
+<p>Not implemented:</p>
+<ol><li>Table of contents</li><li>Tables</li></ol>
+
+<h2>Use</h2>
+
+<p>Parsing is done with either Marker.parse or Marker.parse_file. Both parse methods will return a parse tree that has <tt>to_html</tt> and <tt>to_s</tt> methods that "render" the markup. Both render methods will accept an options hash.</p>
+
+<p>Example:</p>
+<pre>
+&gt;&gt; require 'marker'
+=&gt; true
+&gt;&gt; m = Marker.parse "== heading ==\nparagraph with '''bold''' text"
+=&gt; Markup+...
+&gt;&gt; puts m.to_s
+heading
+--------------------------------------------------------------------------------
+paragraph with *bold* text
+=&gt; nil
+&gt;&gt; puts m.to_html
+&lt;h2&gt;heading&lt;/h2&gt;
+&lt;p&gt;paragraph with &lt;b&gt;bold&lt;/b&gt; text&lt;/p&gt;
+=&gt; nil
+</pre>
+
+<h3>Templates</h3>
+
+<p>Templates are implemented as method calls to a templates module. Each method in the templates module is considered a template and can be called using the "<tt>{{template_name}}</tt>" syntax. Each template method is expected to take three arguments: the render format (<tt>:html</tt> or <tt>:text</tt>), an array of positional parameters, and a hash of named parameters. For example,</p>
+<pre>
+module MyTemplates
+  def logo( format, pos_params, name_params )
+    case format
+    when :html
+      '&lt;img src="/images/logo.png" /&gt;'
+    else
+      ''
+    end
+  end
+end
+</pre>
+
+<p>Template modules are passed to Marker by setting the <tt>templates</tt> property:</p>
+<pre>
+require 'my_templates'
+require 'marker'
+
+Marker.templates = Templates
+</pre>
+
+<p>If no template method is found, the template call is printed for debugging:</p>
+<pre>
+&gt;&gt; puts Marker.parse( '{{t|one|two|name=val}}' ).to_s
+render:t( :text, ["one", "two"], {"name"=&gt;"val"} )
+</pre>
+
+<p>Template names from markup are converted to lower case and have spaces replaced with underscores to match ruby method naming conventions and to be case insensitive for markup writers. For example,</p>
+<pre>
+"{{ My Template }}"  =&gt; :my_template
+"{{NaMe}}"           =&gt; :name
+</pre>
+
+<h3>Internal Links</h3>
+
+<p>Internal links are implemented as links with default prefixes. The link prefix is specified by setting the <tt>link_base</tt> property:</p>
+<pre>
+require 'marker'
+
+Marker.link_base = 'http://example.com/pages/'
+
+&gt;&gt; puts Marker.parse( '[[target|name]]' ).to_html
+&lt;p&gt;&lt;a href='http://example.com/pages/target'&gt;name&lt;/a&gt;&lt;/p&gt;
+</pre>
+
+<p>The link target is appended to the link prefix, along with a beginning '/'. If no link base is given, links are just the link target with a beginning '/'. The link base can also be given as a render option.</p>
+
+<h3>Unlabelled Links</h3>
+
+<p>Unlabelled, or "bare" links are detected if they start with a recognized URL scheme such as <tt>http</tt> or <tt>https</tt>. The URL is used as the link text.</p>
+
+<h2>Command Line Program</h2>
+
+<p>Marker comes with a command-line program that will render both HTML and text. If no input file is given, it reads from stdin.</p>
+
+<pre>
+Usage: marker [--format (html|text)] [input-file]
+</pre>
+
+<h2>License</h2>
+
+<p>Marker is copyright 2009 Ryan Blue and distributed under the terms of the GNU General Public License (GPL). See the LICENSE file for further information on the GPL, or visit <a href='http://creativecommons.org/licenses/GPL/2.0/'>http://creativecommons.org/licenses/GPL/2.0/</a>.</p>
+
