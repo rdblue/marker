@@ -508,8 +508,22 @@ module Marker
     # avoids using a white-list so that utf-8 characters are accepted
     #
     # matches anything up to a delimiter or whitespace
+    #
+    # escaped delimiters for templates go here too.  this enables markup to
+    # pass pipes and equals signs into templates.  for example:
+    # {{ highlight | format=ruby |
+    # array.map do \|el\|
+    #   el.reverse
+    # end
+    # }}
     rule plain_word
       (!delimiter ![ \t\r\n] .)+ <Word>
+      /
+      "\\\\" <Word> # fixup vim syntax --> "
+      /
+      "\\|" <Word>
+      /
+      "\\=" <Word>
     end
 
     ##### delimiters
