@@ -477,6 +477,8 @@ module Marker
       /
       url
       /
+      escaped_char
+      /
       plain_word
       /
       bold_toggle # allow unmatched delimiters after we have ruled out structures
@@ -517,13 +519,7 @@ module Marker
     # end
     # }}
     rule plain_word
-      (!delimiter ![ \t\r\n] .)+ <Word>
-      /
-      "\\\\" <Word> # fixup vim syntax --> "
-      /
-      "\\|" <Word>
-      /
-      "\\=" <Word>
+      (!delimiter [^ \t\r\n])+ <Word>
     end
 
     ##### delimiters
@@ -551,6 +547,8 @@ module Marker
       arg_delimiter
       /
       term_delimiter
+      /
+      escaped_char
     end
 
     rule bold_toggle
@@ -658,6 +656,14 @@ module Marker
 #    rule constant_name
 #      [A-Z_]+
 #    end
+
+    rule escaped_char
+      "\\\\" <Escaped> # fix vim highlighting => "
+      /
+      "\\|" <Escaped>
+      /
+      "\\=" <Escaped>
+    end
 
     rule number
       [1-9] digit* {

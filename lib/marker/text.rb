@@ -74,6 +74,16 @@ module Marker #:nodoc:
     end
   end
 
+  class Escaped < ParseNode
+    def to_html( options = {} )
+      text_value.slice(-1,1)
+    end
+
+    def to_s( options = {} )
+      text_value.slice(-1,1)
+    end
+  end
+
   class HorizRule < ParseNode
     def to_html( options = {} )
       "<hr />" +

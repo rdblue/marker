@@ -52,4 +52,14 @@ class TemplatesTest < Test::Unit::TestCase
     assert_match("<p>render:template( :html, [\"<a href='http://www.example.com'>Example</a>\"], {} )</p>", markup.to_html)
   end
 
+  def test_escaped_characters
+    # the single quotes are important here, to make sure the "\" are in the actual text
+    # this test is messed up right now.  we should have a way to send a single
+    # '\' through, but ruby seems to have errors with it!  for now, just removing that case.
+    text = '{{ template | \| | a \= b | \|a, b\| }}'
+    markup = Marker.parse text
+
+    assert_match('<p>render:template( :html, ["|", "a = b", "|a, b|"], {} )</p>', markup.to_html)
+  end
+
 end

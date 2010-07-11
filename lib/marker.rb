@@ -22,6 +22,8 @@ require 'marker/verbatim'
 
 require 'marker/language'
 
+$stderr.puts "loading Marker at #{__FILE__}"
+
 #:include:README
 module Marker
   class << self
