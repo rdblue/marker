@@ -17,7 +17,12 @@ module Marker #:nodoc:
     end
 
     def render( format, options = {} )
-      Marker.templates.send( target, format, *arg_list( format, options ) )
+      ordered, named = arg_list( format, options )
+      Marker.templates.send(
+          target, format,
+          ordered, named,
+          options.merge( :tree => self )
+        )
     end
 
     def target
@@ -105,6 +110,7 @@ module Marker #:nodoc:
   # A set of basic templates for rendering
   module DefaultTemplates
     def self.method_missing( sym, *args )
+      args.pop # don't print the options hash
       "render:#{sym}( #{args.map(&:inspect).join(', ')} )"
     end
   end
