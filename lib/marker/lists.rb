@@ -7,7 +7,39 @@
 require 'marker/common'
 
 module Marker #:nodoc:
-  # used to collect list lines into lists structured hierarchically, like in HTML
+  # used to collect list lines into lists structured hierarchically
+  #
+  # this class contains logic for combining lists, rendering logic is contained
+  # in subclasses like BulletedListBuilder (but not ItemBuilder!).
+  #
+  # ListBuilders encapsulate a single level of a multi-level list.  The
+  # contents of a ListBuilder are either the parsed nodes containing actual
+  # text, or recursive ListBuilders that eventually contain a ItemBuilder.  For
+  # example:
+  #  LB(ol)/LB(ol)/LB(ul)/IB(li)
+  #
+  # ListBuilders work by having the ability to combine structure, via the +
+  # method:
+  #  LB(ol)/LB(ol)/LB(ul)/IB(li)
+  #     +
+  #  LB(ol)/LB(ol)/IB(li)
+  #     =
+  #  LB(ol)/LB(ol)/LB(ul)/IB(li)
+  #              `/IB(li)
+  #
+  # When new layers are appended to a ListBuilder (via <<), the ListBuilder
+  # automatically checks if the new content can be merged into existing
+  # content.  If so, the layers are combined.
+  #
+  # Marker's list types create ListBuilders like those above, depending on the
+  # strucure that is parsed.  For the most part, it works like this:
+  #  ** text    => LB(ul)/LB(ul)/IB(li)
+  #  ##: phrase => LB(ol)/LB(ol)/LB(div.indent)/IB(div)
+  #
+  # The top-level List class creates a ListBuilder with no contents and then
+  # appends the structure of each child, which combines the structures and
+  # creates the simplified list so that we end up with list items collected
+  # under list types correctly.
   class ListBuilder
     attr_reader :contents
 
@@ -22,6 +54,10 @@ module Marker #:nodoc:
 
     # append a new child to contents.  if that child can be combined with the
     # last child already known, then we add them together.
+    #
+    # appends a child ListBuilder or syntax node inside the list.  If the new
+    # child can be combined with the last child list structure, it is added to
+    # that existing child.
     def <<( other )
       last = contents.last
 
@@ -34,6 +70,8 @@ module Marker #:nodoc:
       self
     end
 
+    # combines this ListBuilder with another by adding the added ListBuilder's
+    # children to contents.
     def +( other )
       other.contents.each { |item| self << item } if self === other
 
@@ -66,14 +104,33 @@ module Marker #:nodoc:
     end
   end
 
-  # a ListBuilder to encapsulate raw list item contents
+  # ItemBuilder is a ListBuilder to encapsulate raw list item contents
+  #
+  # ItemBuilders are like ListBuilders, but have slightly different rules for
+  # combination, because HTML list items contain sub-lists.  This means that
+  # IB(li) === LB(ol) and IB(li) === LB(ul), but LB(ol) =/= IB(li).
   class ItemBuilder < ListBuilder
     def ===( other )
+      # allow any subclass of ListBuilder except for ItemBuilder
       other.is_a? ListBuilder and not other.is_a? ItemBuilder
     end
 
+    # when ListBuilders are added, we actually append them since the structure
+    # needs to be preserved.  For example:
+    #  LB(ul)/IB(li)
+    #     +
+    #  LB(ul)/LB(ol)/IB(li)
+    #     =
+    #  LB(ul)/IB(li)/LB(ol)/IB(li)
+    #
+    # this produces HTML:
+    #   <ul><li>text<ol><li>phrase</li></ol></li></ul>
+    #
+    # alternatively, text:
+    #    * text
+    #       1. phrase
     def +( other )
-      self << other
+      self << other # if self === other
     end
   end
 
