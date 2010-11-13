@@ -175,6 +175,8 @@ module Marker
 
     rule verbatim
       " " v:(!"\n" .)* <Verbatim>
+#      /
+#      "\t" v:(!"\n" .)* <Verbatim>
     end
 
     rule horiz_rule
