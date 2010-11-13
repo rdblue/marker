@@ -14,7 +14,7 @@ class ListTest < Test::Unit::TestCase
     text = "* List item 1\n** List item 2\n* List item 3"
     markup = Marker.parse text
     
-    assert_match("<ul><li>List item 1</li><ul><li>List item 2</li></ul><li>List item 3</li></ul>", markup.to_html)
+    assert_match("<ul><li>List item 1<ul><li>List item 2</li></ul></li><li>List item 3</li></ul>", markup.to_html)
   end
 
   def test_numbered_list
@@ -28,7 +28,7 @@ class ListTest < Test::Unit::TestCase
     text = "# List item 1\n## List item 2\n# List item 3"
     markup = Marker.parse text
     
-    assert_match("<ol><li>List item 1</li><ol><li>List item 2</li></ol><li>List item 3</li></ol>", markup.to_html)
+    assert_match("<ol><li>List item 1<ol><li>List item 2</li></ol></li><li>List item 3</li></ol>", markup.to_html)
   end
 
   def test_definition_list
@@ -59,15 +59,22 @@ class ListTest < Test::Unit::TestCase
     markup = Marker.parse text
     
     assert_match("<ol><li>List item 1</li></ol><ul><li>List item 2</li></ul><ol><li>List item 3</li></ol><dl><dt>List item 4</dt>" +
-        "<dd>definition</dd></dl><div class='indent'><div>List item 5</div></div><ul><li>List item 6</li></ul>", markup.to_html)
+        "<dd>definition</dd></dl><div class='indent'><div class='indent_item'>List item 5</div></div><ul><li>List item 6</li></ul>", markup.to_html)
   end
 
   def test_nested_mixed_list
     text = "# List item 1\n#* List item 2\n# List item 3\n## List item 4\n#; List item 5 : definition\n#:List item 6"
     markup = Marker.parse text
     
-    assert_match("<ol><li>List item 1</li><ul><li>List item 2</li></ul><li>List item 3</li><ol><li>List item 4</li></ol>" +
-        "<dl><dt>List item 5</dt><dd>definition</dd></dl><div class='indent'><div>List item 6</div></div></ol>", markup.to_html)
+    assert_match("<ol><li>List item 1<ul><li>List item 2</li></ul></li><li>List item 3<ol><li>List item 4</li></ol>" +
+        "<dl><dt>List item 5</dt><dd>definition</dd></dl><div class='indent'><div class='indent_item'>List item 6</div></div></li></ol>", markup.to_html)
+  end
+
+  def test_bare_nested_list
+    text = "*** item"
+    markup = Marker.parse text
+
+    assert_match("<ul><li><ul><li><ul><li>item</li></ul></li></ul></li></ul>", markup.to_html)
   end
 
 end

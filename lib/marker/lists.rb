@@ -9,54 +9,49 @@ require 'marker/common'
 module Marker #:nodoc:
   # used to collect list lines into lists structured hierarchically, like in HTML
   class ListBuilder
-    attr_reader :tag, :contents, :attrs
+    attr_reader :contents
 
-    def initialize( contents, tag, attrs = {} )
-      @contents = [contents].flatten
-      @tag = tag
-      @attrs = attrs
+    def initialize( contents = nil )
+      @contents = ( contents ? [contents] : [] )
     end
 
-    # returns true if the l has the same tag
-    def ===( l )
-      ( l.is_a? self.class and tag == l.tag )
+    # returns true if the other has the same type
+    def ===( other )
+      ( other.is_a? self.class )
     end
 
-    def <<( l )
+    # append a new child to contents.  if that child can be combined with the
+    # last child already known, then we add them together.
+    def <<( other )
       last = contents.last
 
-      if last and last === l
-        last += l
+      if last and last === other
+        last += other
       else
-        contents << l
+        contents << other
       end
 
       self
     end
 
-    def +( l )
-      l.contents.each { |i| self << i } if self === l
+    def +( other )
+      other.contents.each { |item| self << item } if self === other
 
       self
     end
 
     def to_html( options = {} )
-      if tag
-        "<#{tag}" +
-        ( attrs.any?? ' ' : '' ) +
-        attrs.map { |k, v|
-          "#{k}='#{v}'"
-        }.join(' ') +
-        ">" +
-        contents.map { |i|
-          i.to_html(options)
-        }.join +
-        "</#{tag}>"
-      else
-        contents.map { |i|
-          i.to_html(options)
-        }.join
-      end
+      contents_to_html( options )
+    end
+
+    def contents_to_html( options = {} )
+      contents.map { |item|
+        item_to_html( item, options )
+      }.join
+    end
+
+    def item_to_html( item, options = {} )
+      item.to_html( options )
     end
 
     def to_s( options = {} )
@@ -71,9 +66,20 @@ module Marker #:nodoc:
     end
   end
 
+  # a ListBuilder to encapsulate raw list item contents
+  class ItemBuilder < ListBuilder
+    def ===( other )
+      other.is_a? ListBuilder and not other.is_a? ItemBuilder
+    end
+
+    def +( other )
+      self << other
+    end
+  end
+
   class List < RecursiveList
     def to_html( options = {} )
-      l = ListBuilder.new( [], nil )
+      l = ListBuilder.new
       to_a.each do |item|
         l << item.structure
       end
@@ -81,7 +87,7 @@ module Marker #:nodoc:
     end
 
     def to_s( options = {} )
-      l = ListBuilder.new( [], nil )
+      l = ListBuilder.new
       to_a.each do |item|
         l << item.structure
       end
@@ -89,11 +95,17 @@ module Marker #:nodoc:
     end
   end
 
-  class Bulleted < ParseNode
+  class BulletedListBuilder < ListBuilder
     def to_html( options = {} )
-      "<li>#{phrase.to_html(options)}</li>"
+      "<ul>#{contents_to_html(options)}</ul>"
     end
 
+    def item_to_html( item, options = {} )
+      "<li>#{item.to_html(options)}</li>"
+    end
+  end
+
+  class Bulleted < ParseNode
     def to_s( options = {} )
       indent = (options[:indent] || 0)
       '    ' * (indent > 0 ? indent - 1 : 0) +
@@ -102,9 +114,9 @@ module Marker #:nodoc:
 
     def structure
       if phrase
-        ListBuilder.new( self, :ul )
+        BulletedListBuilder.new( ItemBuilder.new( phrase ) )
       else
-        ListBuilder.new( list_item.structure, :ul )
+        BulletedListBuilder.new( list_item.structure )
       end
     end
 
@@ -114,11 +126,17 @@ module Marker #:nodoc:
     end
   end
 
-  class Numbered < ParseNode
+  class NumberedListBuilder < ListBuilder
     def to_html( options = {} )
-      "<li>#{phrase.to_html(options)}</li>"
+      "<ol>#{contents_to_html(options)}</ol>"
     end
 
+    def item_to_html( item, options = {} )
+      "<li>#{item.to_html(options)}</li>"
+    end
+  end
+
+  class Numbered < ParseNode
     def to_s( options = {} )
       indent = (options[:indent] || 0)
       '    ' * (indent > 0 ? indent - 1 : 0) +
@@ -127,9 +145,9 @@ module Marker #:nodoc:
 
     def structure
       if phrase
-        ListBuilder.new( self, :ol )
+        NumberedListBuilder.new( ItemBuilder.new( phrase ) )
       else
-        ListBuilder.new( list_item.structure, :ol )
+        NumberedListBuilder.new( list_item.structure )
       end
     end
 
@@ -139,11 +157,17 @@ module Marker #:nodoc:
     end
   end
 
-  class Indented < ParseNode
+  class IndentedListBuilder < ListBuilder
     def to_html( options = {} )
-      "<div>#{phrase.to_html(options)}</div>"
+      "<div class='indent'>#{contents_to_html(options)}</div>"
     end
 
+    def item_to_html( item, options = {} )
+      "<div class='indent_item'>#{item.to_html(options)}</div>"
+    end
+  end
+
+  class Indented < ParseNode
     def to_s( options = {} )
       indent = (options[:indent] || 0)
       '    ' * (indent > 0 ? indent : 0) +
@@ -152,9 +176,9 @@ module Marker #:nodoc:
 
     def structure
       if phrase
-        ListBuilder.new( self, :div, :class => 'indent' )
+        IndentedListBuilder.new( ItemBuilder.new( phrase ) )
       else
-        ListBuilder.new( list_item.structure, :div, :class => 'indent' )
+        IndentedListBuilder.new( list_item.structure )
       end
     end
 
@@ -164,12 +188,19 @@ module Marker #:nodoc:
     end
   end
 
-  class Definition < ParseNode
+  class DefinitionListBuilder < ListBuilder
     def to_html( options = {} )
-      "<dt>#{term.to_html(options)}</dt>" +
-      ( definition ? "<dd>#{definition.to_html(options)}</dd>" : "" )
+      "<dl>#{contents_to_html(options)}</dl>"
     end
 
+    def item_to_html( item, options = {} )
+      term, definition = item
+      "<dt>#{term.to_html(options)}</dt>" +
+      "<dd>#{definition.to_html(options)}</dd>"
+    end
+  end
+
+  class Definition < ParseNode
     def to_s( options = {} )
       indent = (options[:indent] || 0)
       '    ' * (indent > 0 ? indent - 1: 0) +
@@ -177,7 +208,7 @@ module Marker #:nodoc:
     end
 
     def structure
-      ListBuilder.new( self, :dl )
+      DefinitionListBuilder.new( [term, ItemBuilder.new( definition )] )
     end
 
     #-- defaults ++
