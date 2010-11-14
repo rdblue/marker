@@ -17,12 +17,13 @@ module Marker #:nodoc:
     end
 
     def render( format, options = {} )
+      # optionally change the format for argument rendering
+      if options[:template_formats] and options[:template_formats][target]
+        format = options[:template_formats][target]
+      end
+
       ordered, named = arg_list( format, options )
-      Marker.templates.send(
-          target, format,
-          ordered, named,
-          options.merge( :tree => self )
-        )
+      Marker.templates.send( target, format, ordered, named, options )
     end
 
     def target
@@ -50,6 +51,18 @@ module Marker #:nodoc:
       named_params = {}
 
       case format
+      when :raw
+        # don't render the text, just return the original value
+        # this is needed for special templates, like syntax highlighting
+        to_a.each do |a|
+          next unless a
+          value = ( a.val ? a.val.text_value : "" )
+          if a.name
+            named_params[a.name.to_s(options)] = value
+          else
+            pos_params << value
+          end
+        end
       when :html
         to_a.each do |a|
           next unless a
@@ -110,7 +123,6 @@ module Marker #:nodoc:
   # A set of basic templates for rendering
   module DefaultTemplates
     def self.method_missing( sym, *args )
-      args.pop # don't print the options hash
       "render:#{sym}( #{args.map(&:inspect).join(', ')} )"
     end
   end
