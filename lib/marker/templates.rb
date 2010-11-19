@@ -55,13 +55,7 @@ module Marker #:nodoc:
         # don't render the text, just return the original value
         # this is needed for special templates, like syntax highlighting
         to_a.each do |a|
-          next unless a
-          value = ( a.val ? a.val.text_value : "" )
-          if a.name
-            named_params[a.name.to_s(options)] = value
-          else
-            pos_params << value
-          end
+          pos_params << a.text_value if a
         end
       when :html
         to_a.each do |a|
