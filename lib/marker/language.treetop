@@ -13,9 +13,19 @@ module Marker
     end
 
     rule block
-      line
+      heading
+      /
+      list
+      /
+      verbatim_area
+      /
+      horiz_rule
       /
       text
+      /
+      template_end
+      /
+      arg_delimiter
       /
       ws { # allows blank lines
         def to_html( options = {} )
@@ -29,15 +39,6 @@ module Marker
     end
 
     ##### special lines
-    rule line
-      heading
-      /
-      list
-      /
-      verbatim_area
-      /
-      horiz_rule
-    end
 
     rule heading
       s:heading_toggle+ ws l:heading_enclosed_text ws e:heading_toggle+ <Heading>
@@ -77,10 +78,6 @@ module Marker
       external_link_end
       /
       template_start
-      /
-      template_end
-      /
-      arg_delimiter
       /
       term_delimiter
     end
@@ -161,10 +158,6 @@ module Marker
       external_link_end
       /
       template_start
-      /
-      template_end
-      /
-      arg_delimiter
     end
 
     rule verbatim_area
@@ -194,9 +187,9 @@ module Marker
 
     # a block of normal text, including single newlines but not a special line
     rule text
-      !line h:phrase ws rnl r:text <Paragraph>
+      !(heading / list / verbatim_area / horiz_rule) h:phrase ws rnl r:text <Paragraph>
       /
-      !line h:phrase ws <Paragraph>
+      !(heading / list / verbatim_area / horiz_rule) h:phrase ws <Paragraph>
     end
 
     # a block of text that does not require a !line check
@@ -233,7 +226,23 @@ module Marker
       /
       plain_word
       /
-      delimiter # catch all remaining unmatched delimiters
+      bold_toggle
+      /
+      italic_toggle
+      /
+      heading_toggle
+      /
+      internal_link_start
+      /
+      internal_link_end
+      /
+      external_link_start
+      /
+      external_link_end
+      /
+      template_start
+      /
+      term_delimiter
     end
 
     ##### text markup
@@ -272,10 +281,6 @@ module Marker
       /
       template_start
       /
-      template_end
-      /
-      arg_delimiter
-      /
       term_delimiter
     end
 
@@ -313,10 +318,6 @@ module Marker
       /
       template_start
       /
-      template_end
-      /
-      arg_delimiter
-      /
       term_delimiter
     end
 
@@ -330,7 +331,6 @@ module Marker
     # [[ link target | link label ]]
     # * can contain white space
     # * cannot contain new lines
-    #-- TODO: handle [[ url | label ]] and variants ++
     rule internal_link
       internal_link_start ws t:plain_text ws a:arg_delimiter ws l:internal_link_enclosed_text ws internal_link_end <InternalLink>
       /
@@ -367,10 +367,6 @@ module Marker
       external_link_end
       /
       template_start
-      /
-      template_end
-      /
-      arg_delimiter
       /
       term_delimiter
     end
@@ -434,72 +430,66 @@ module Marker
       /
       template_start
       /
-      template_end
-      /
-      arg_delimiter
-      /
       term_delimiter
     end
 
     rule template
-      template_start aws t:plain_text aws arg_delimiter aws args:arg_list aws template_end <Template>
+      template_start aws t:plain_text aws arg_delimiter args:arg_list template_end <Template>
       /
       template_start aws t:plain_text aws template_end <Template>
     end
 
     rule arg_list
-      h:arg aws arg_delimiter aws r:arg_list <Arguments>
+      h:arg arg_delimiter r:arg_list <Arguments>
       /
       h:arg "" <Arguments>
     end
 
     # a plain (positional) argument or a named (name=text) argument
     rule arg
-      name:plain_text aws heading_toggle aws val:arg_list_enclosed_text <Argument>
+      ws name:plain_text ws heading_toggle val:arg_markup <Argument>
       /
-      val:arg_list_enclosed_text "" <Argument>
+      val:arg_markup "" <Argument>
       /
       "" "" <Argument>
     end
 
-    rule arg_list_enclosed_text
-      h:arg_list_enclosed_word aws r:arg_list_enclosed_text <Phrase>
+    rule arg_markup
+      h:arg_block ws rnl r:arg_markup <Markup>
       /
-      h:arg_list_enclosed_word "" <Phrase>
+      h:arg_block ws <Markup>
     end
 
-    rule arg_list_enclosed_word
-      bold
+    rule arg_block
+      heading
       /
-      italic
+      list
       /
-      link
+      arg_verbatim_area
       /
-      template
+      horiz_rule
       /
-      url
+      text
       /
-      escaped_char
+      ws { # allows blank lines
+        def to_html( options = {} )
+          ""
+        end
+
+        def to_s( options = {} )
+          ""
+        end
+      }
+    end
+
+    rule arg_verbatim_area
+      h:arg_verbatim rnl r:arg_verbatim_area <VerbatimArea>
       /
-      plain_word
-      /
-      bold_toggle # allow unmatched delimiters after we have ruled out structures
-      /
-      italic_toggle
-      /
-      heading_toggle
-      /
-      internal_link_start
-      /
-      internal_link_end
-      /
-      external_link_start
-      /
-      external_link_end
-      /
-      template_start
-      /
-      term_delimiter
+      h:arg_verbatim "" <VerbatimArea>
+    end
+
+    rule arg_verbatim
+      " " v:( !("\n" / arg_delimiter / template_end) .)* <Verbatim>
     end
 
     # a phrase of plain words
@@ -511,15 +501,7 @@ module Marker
 
     # avoids using a white-list so that utf-8 characters are accepted
     #
-    # matches anything up to a delimiter or whitespace
-    #
-    # escaped delimiters for templates go here too.  this enables markup to
-    # pass pipes and equals signs into templates.  for example:
-    # {{ highlight | format=ruby |
-    # array.map do \|el\|
-    #   el.reverse
-    # end
-    # }}
+    # matches anything other than a delimiter or whitespace
     rule plain_word
       (!delimiter [^ \t\r\n])+ <Word>
     end
@@ -549,8 +531,6 @@ module Marker
       arg_delimiter
       /
       term_delimiter
-      /
-      escaped_char
     end
 
     rule bold_toggle
@@ -658,14 +638,6 @@ module Marker
 #    rule constant_name
 #      [A-Z_]+
 #    end
-
-    rule escaped_char
-      "\\\\" <Escaped> # fix vim highlighting => "
-      /
-      "\\|" <Escaped>
-      /
-      "\\=" <Escaped>
-    end
 
     rule number
       [1-9] digit* {
