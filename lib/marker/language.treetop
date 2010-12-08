@@ -447,7 +447,7 @@ module Marker
 
     # a plain (positional) argument or a named (name=text) argument
     rule arg
-      ws name:plain_text ws heading_toggle val:arg_markup <Argument>
+      aws name:plain_text ws heading_toggle val:arg_markup <Argument>
       /
       val:arg_markup "" <Argument>
       /
