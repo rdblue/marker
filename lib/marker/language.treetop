@@ -198,7 +198,7 @@ module Marker
 
     # paragraph wrapper for unsafe text
     rule unsafe_paragraph
-      unsafe_text "" <Paragraph>
+      text:unsafe_text "" <Paragraph>
     end
 
     # a block of text that does not require a !line check
