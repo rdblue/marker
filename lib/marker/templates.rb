@@ -1,5 +1,5 @@
 #--
-# Copyright 2009 Ryan Blue.
+# Copyright 2009-2011 Ryan Blue.
 # Distributed under the terms of the GNU General Public License (GPL).
 # See the LICENSE file for further information on the GPL.
 #++
@@ -9,7 +9,16 @@ require 'marker/common'
 module Marker #:nodoc:
   class Template < ParseNode
     def to_html( options = {} )
-      render( :html, options )
+      # if this template contains block-style arguments, then it needs to be
+      # wrapped in a div.  otherwise, all arguments are inline and it does not
+      # get wrapped.  the template target is used as the html class.
+      #
+      # it may be a good idea to wrap inline templates in a span
+      if block?
+        "<div class='#{target}'>#{render( :html, options )}</div>"
+      else
+        render( :html, options )
+      end
     end
 
     def to_s( options = {} )
@@ -33,6 +42,10 @@ module Marker #:nodoc:
 
     def arg_list( format, options )
       ( args ? args.to_arg_list( format, options ) : [[], {}] )
+    end
+
+    def block?
+      ( args ? args.block? : false )
     end
 
     #-- defaults ++
@@ -82,6 +95,12 @@ module Marker #:nodoc:
       [pos_params, named_params]
     end
 
+    # returns true if there are any block-style arguments and false if all
+    # arguments are inline-style
+    def block?
+      to_a.map(&:block?).reduce { |a, b| a or b }
+    end
+
     def to_html( options = {} )
       to_a.map { |a|
         a ? a.to_html(options) : ''
@@ -104,6 +123,11 @@ module Marker #:nodoc:
       ( name ? "'#{name}' => '#{val}'" : "'#{val}'" )
     end
 
+    # is this argument a block style?
+    def block?
+      true
+    end
+
     #-- defaults ++
     def name #:nodoc:
       nil
@@ -113,6 +137,17 @@ module Marker #:nodoc:
       nil
     end
   end
+
+  # allow the grammar to distinguish between argument styles, but they render
+  # no differently at the argument level.  these allow a template to decide
+  # whether it needs to be wrapped in a div for html output.
+  class InlineArgument < Argument
+    def block?
+      false
+    end
+  end
+
+  class BlockArgument < Argument; end
 
   # A set of basic templates for rendering
   module DefaultTemplates

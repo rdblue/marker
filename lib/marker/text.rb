@@ -1,5 +1,5 @@
 #--
-# Copyright 2009 Ryan Blue.
+# Copyright 2009-2011 Ryan Blue.
 # Distributed under the terms of the GNU General Public License (GPL).
 # See the LICENSE file for further information on the GPL.
 #++
@@ -7,13 +7,21 @@
 require 'marker/common'
 
 module Marker #:nodoc:
-  class Paragraph < RecursiveList
+  class Paragraph < ParseNode
     def to_html( options = {} )
-      '<p>' +
+      "<p>#{text.to_html(options)}</p>"
+    end
+
+    def to_s( options = {} )
+      text.to_s(options)
+    end
+  end
+
+  class TextBlock < RecursiveList
+    def to_html( options = {} )
       to_a.map { |p|
         p.to_html(options)
-      }.join(' ') +
-      '</p>'
+      }.join(' ')
     end
 
     # TODO: add wordwrap

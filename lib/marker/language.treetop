@@ -1,5 +1,5 @@
 #--
-# Copyright 2009 Ryan Blue.
+# Copyright 2009-2011 Ryan Blue.
 # Distributed under the terms of the GNU General Public License (GPL).
 # See the LICENSE file for further information on the GPL.
 #++
@@ -21,7 +21,7 @@ module Marker
       /
       horiz_rule
       /
-      text
+      paragraph
       /
       template_end
       /
@@ -178,18 +178,27 @@ module Marker
       #   graph
       # MediaWiki renders (newlines removed): <hr /><p>a para-</p><p>graph</p>
       # this renders (newlines removed): <hr /><p>a para-graph</p>
-      "----" "-"* ws t:unsafe_text <HorizRule>
+      "----" "-"* ws t:unsafe_paragraph <HorizRule>
       /
       "----" "-"* <HorizRule>
     end
 
     ##### combination rules
 
+    rule paragraph
+      text "" <Paragraph>
+    end
+
     # a block of normal text, including single newlines but not a special line
     rule text
-      !(heading / list / verbatim_area / horiz_rule) h:phrase ws rnl r:text <Paragraph>
+      !(heading / list / verbatim_area / horiz_rule) h:phrase ws rnl r:text <TextBlock>
       /
-      !(heading / list / verbatim_area / horiz_rule) h:phrase ws <Paragraph>
+      !(heading / list / verbatim_area / horiz_rule) h:phrase ws <TextBlock>
+    end
+
+    # paragraph wrapper for unsafe text
+    rule unsafe_paragraph
+      unsafe_text "" <Paragraph>
     end
 
     # a block of text that does not require a !line check
@@ -201,9 +210,9 @@ module Marker
     # Because it follows a structure without a new line, it is safe to assume
     # the text is a phrase.
     rule unsafe_text
-      h:phrase ws rnl r:text <Paragraph>
+      h:phrase ws rnl r:text <TextBlock>
       /
-      h:phrase ws <Paragraph>
+      h:phrase ws <TextBlock>
     end
 
     # a phrase of words without newlines
@@ -446,12 +455,31 @@ module Marker
     end
 
     # a plain (positional) argument or a named (name=text) argument
+    #
+    # there are two types of values matched here, inline and block.  inline
+    # values are plain text areas that can be included in the containing
+    # paragraph.  block values are things like lists and groups of paragraphs
+    # that would normally be rendered as paragraphs themselves.  this
+    # distinction is necessary to gracefully handle different types of uses for
+    # templates.  examples:
+    #
+    # inline: text with a fixed-width {{tt|word}} embedded.
+    # block:
+    # {{ ruby |
+    # def /( str )
+    #   return File.join( self, str )
+    # end
+    # }}
     rule arg
-      aws name:plain_text ws heading_toggle val:arg_markup <Argument>
+      aws name:plain_text ws heading_toggle val:text <InlineArgument>
       /
-      val:arg_markup "" <Argument>
+      aws name:plain_text ws heading_toggle val:arg_markup <BlockArgument>
       /
-      "" "" <Argument>
+      val:text "" <InlineArgument>
+      /
+      val:arg_markup "" <BlockArgument>
+      /
+      "" "" <InlineArgument>
     end
 
     rule arg_markup
@@ -469,7 +497,7 @@ module Marker
       /
       horiz_rule
       /
-      text
+      paragraph
       /
       ws { # allows blank lines
         def to_html( options = {} )
