@@ -9,7 +9,11 @@ require 'marker/common'
 module Marker #:nodoc:
   class Paragraph < ParseNode
     def to_html( options = {} )
-      "<p>#{text.to_html(options)}</p>"
+      if text.no_wrap?
+        text.to_html(options)
+      else
+        "<p>#{text.to_html(options)}</p>"
+      end
     end
 
     def to_s( options = {} )
@@ -29,6 +33,11 @@ module Marker #:nodoc:
       to_a.map { |p|
         p.to_s(options)
       }.join(' ')
+    end
+
+    # returns true if this text block does not need to be wrapped in a paragraph
+    def no_wrap?
+      single? and h.no_wrap?
     end
   end
 
@@ -50,6 +59,11 @@ module Marker #:nodoc:
     # returns true if there was white space after the first "word"
     def space?
       (ws and ws.present?) or (aws and aws.present?)
+    end
+
+    # returns true if this phrase does not need to be wrapped in a paragraph
+    def no_wrap?
+      single? and h.is_a? Template
     end
 
     #-- defaults ++
