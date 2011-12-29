@@ -7,7 +7,7 @@
 module Marker
   grammar Language
     rule document
-      markup "" <Document>
+      rnl* markup aws <Document>
     end
 
     rule markup
@@ -25,14 +25,14 @@ module Marker
       /
       horiz_rule
       /
-      paragraph
+      known_text_paragraph
       /
       template_end
       /
       arg_delimiter
     end
 
-    ##### special lines
+    ##### special lines - line anchored markup
 
     rule heading
       s:heading_toggle+ ws l:heading_enclosed_text ws e:heading_toggle+ <Heading>
@@ -172,7 +172,7 @@ module Marker
       #   graph
       # MediaWiki renders (newlines removed): <hr /><p>a para-</p><p>graph</p>
       # this renders (newlines removed): <hr /><p>a para-graph</p>
-      "----" "-"* ws t:unsafe_paragraph <HorizRule>
+      "----" "-"* ws t:known_text_paragraph <HorizRule>
       /
       "----" "-"* <HorizRule>
     end
@@ -191,11 +191,13 @@ module Marker
     end
 
     # paragraph wrapper for unsafe text
-    rule unsafe_paragraph
-      text:unsafe_text "" <Paragraph>
+    rule known_text_paragraph
+      text:known_text "" <Paragraph>
     end
 
     # a block of text that does not require a !line check
+    #
+    # in other words, it is known that this block is text and not line-anchored
     #
     # for situations where text may follow structures that are normally on a
     # single line---e.g., horizontal rules--- the text should be handled like a
@@ -203,7 +205,7 @@ module Marker
     # the text starts like a special line: cases like this: "---- ----".
     # Because it follows a structure without a new line, it is safe to assume
     # the text is a phrase.
-    rule unsafe_text
+    rule known_text
       h:phrase ws rnl r:text <TextBlock>
       /
       h:phrase ws <TextBlock>
@@ -443,7 +445,7 @@ module Marker
     end
 
     rule arg_list
-      h:arg arg_delimiter ws r:arg_list <Arguments>
+      h:arg aws arg_delimiter ws r:arg_list <Arguments>
       /
       h:arg "" <Arguments>
     end
@@ -465,50 +467,50 @@ module Marker
     # end
     # }}
     rule arg
-      name:plain_text ws heading_toggle ws val:unsafe_arg_markup <BlockArgument>
+      name:plain_text ws heading_toggle ws val:arg_safe_known_markup <BlockArgument>
       /
-      name:plain_text ws heading_toggle ws val:unsafe_text <InlineArgument>
+      name:plain_text ws heading_toggle ws val:known_text <InlineArgument>
       /
-      val:unsafe_arg_markup "" <BlockArgument>
+      val:arg_safe_known_markup "" <BlockArgument>
       /
-      val:unsafe_text "" <InlineArgument>
+      val:known_text "" <InlineArgument>
       /
       "" "" <InlineArgument>
     end
 
     # this is used to start lines with unsafe text and continue into a section
     # of markup
-    rule unsafe_arg_markup
-      rnl h:arg_markup <Markup>
+    rule arg_safe_known_markup
+      rnl h:arg_safe_markup <Markup>
       /
-      h:unsafe_paragraph (ws rnl)+ r:arg_markup <Markup>
+      h:known_text_paragraph (ws rnl)+ r:arg_safe_markup <Markup>
     end
 
-    rule arg_markup
-      h:arg_block (ws rnl)+ r:arg_markup <Markup>
+    rule arg_safe_markup
+      h:arg_safe_block (ws rnl)+ r:arg_safe_markup <Markup>
       /
-      h:arg_block aws <Markup>
+      h:arg_safe_block aws <Markup>
     end
 
-    rule arg_block
+    rule arg_safe_block
       heading
       /
       list
       /
-      arg_verbatim_area
+      arg_safe_verbatim_area
       /
       horiz_rule
       /
-      paragraph
+      known_text_paragraph
     end
 
-    rule arg_verbatim_area
-      h:arg_verbatim rnl r:arg_verbatim_area <VerbatimArea>
+    rule arg_safe_verbatim_area
+      h:arg_safe_verbatim rnl r:arg_safe_verbatim_area <VerbatimArea>
       /
-      h:arg_verbatim "" <VerbatimArea>
+      h:arg_safe_verbatim "" <VerbatimArea>
     end
 
-    rule arg_verbatim
+    rule arg_safe_verbatim
       " " v:( !("\n" / arg_delimiter / template_end) .)* <Verbatim>
     end
 
