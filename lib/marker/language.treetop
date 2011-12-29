@@ -6,10 +6,14 @@
 
 module Marker
   grammar Language
+    rule document
+      markup "" <Document>
+    end
+
     rule markup
-      h:block ws rnl r:markup <Markup>
+      h:block (ws rnl)+ r:markup <Markup>
       /
-      h:block ws <Markup>
+      h:block aws <Markup>
     end
 
     rule block
@@ -26,16 +30,6 @@ module Marker
       template_end
       /
       arg_delimiter
-      /
-      ws { # allows blank lines
-        def to_html( options = {} )
-          ""
-        end
-
-        def to_s( options = {} )
-          ""
-        end
-      }
     end
 
     ##### special lines
@@ -443,13 +437,13 @@ module Marker
     end
 
     rule template
-      template_start aws t:plain_text aws arg_delimiter args:arg_list template_end <Template>
+      template_start aws t:plain_text aws arg_delimiter ws args:arg_list aws template_end <Template>
       /
       template_start aws t:plain_text aws template_end <Template>
     end
 
     rule arg_list
-      h:arg arg_delimiter r:arg_list <Arguments>
+      h:arg arg_delimiter ws r:arg_list <Arguments>
       /
       h:arg "" <Arguments>
     end
@@ -471,21 +465,29 @@ module Marker
     # end
     # }}
     rule arg
-      aws name:plain_text ws heading_toggle val:text <InlineArgument>
+      name:plain_text ws heading_toggle ws val:unsafe_arg_markup <BlockArgument>
       /
-      aws name:plain_text ws heading_toggle val:arg_markup <BlockArgument>
+      name:plain_text ws heading_toggle ws val:unsafe_text <InlineArgument>
       /
-      val:text "" <InlineArgument>
+      val:unsafe_arg_markup "" <BlockArgument>
       /
-      val:arg_markup "" <BlockArgument>
+      val:unsafe_text "" <InlineArgument>
       /
       "" "" <InlineArgument>
     end
 
-    rule arg_markup
-      h:arg_block ws rnl r:arg_markup <Markup>
+    # this is used to start lines with unsafe text and continue into a section
+    # of markup
+    rule unsafe_arg_markup
+      rnl h:arg_markup <Markup>
       /
-      h:arg_block ws <Markup>
+      h:unsafe_text rnl r:arg_markup <Markup>
+    end
+
+    rule arg_markup
+      h:arg_block (ws rnl)+ r:arg_markup <Markup>
+      /
+      h:arg_block aws <Markup>
     end
 
     rule arg_block
@@ -498,16 +500,6 @@ module Marker
       horiz_rule
       /
       paragraph
-      /
-      ws { # allows blank lines
-        def to_html( options = {} )
-          ""
-        end
-
-        def to_s( options = {} )
-          ""
-        end
-      }
     end
 
     rule arg_verbatim_area
