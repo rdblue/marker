@@ -14,5 +14,5 @@ SPEC = Gem::Specification.new do |s|
   s.executables << 'marker'
   s.has_rdoc = true
   s.extra_rdoc_files = ['README', 'LICENSE']
-  s.add_dependency( 'treetop', '>= 1.4.2' )
+  s.add_dependency( 'treetop', '~> 1.4' )
 end
