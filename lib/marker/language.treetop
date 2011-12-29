@@ -481,7 +481,7 @@ module Marker
     rule unsafe_arg_markup
       rnl h:arg_markup <Markup>
       /
-      h:unsafe_text rnl r:arg_markup <Markup>
+      h:unsafe_paragraph (ws rnl)+ r:arg_markup <Markup>
     end
 
     rule arg_markup
