@@ -26,13 +26,79 @@ module Marker
       horiz_rule
       /
       known_text_paragraph
-      /
-      template_end
-      /
-      arg_delimiter
     end
 
-    ##### special lines - line anchored markup
+    ##### templates
+
+    rule template
+      template_start aws t:plain_phrase aws arg_delimiter ws args:arg_list aws template_end <Template>
+      /
+      template_start aws t:plain_phrase aws template_end <Template>
+    end
+
+    rule arg_list
+      h:arg aws arg_delimiter ws r:arg_list <Arguments>
+      /
+      h:arg "" <Arguments>
+    end
+
+    # a plain (positional) argument or a named (name=text) argument
+    #
+    # there are two types of values matched here, inline and block.  inline
+    # values are plain text areas that can be included in the containing
+    # paragraph.  block values are things like lists and groups of paragraphs
+    # that would normally be rendered as paragraphs themselves.  this
+    # distinction is necessary to gracefully handle different types of uses for
+    # templates.  examples:
+    #
+    # inline: text with a fixed-width {{tt|word}} embedded.
+    # block:
+    # {{ ruby |
+    # def /( str )
+    #   return File.join( self, str )
+    # end
+    # }}
+    rule arg
+      name:plain_phrase ws heading_toggle ws val:arg_safe_known_markup <BlockArgument>
+      /
+      name:plain_phrase ws heading_toggle ws val:arg_safe_known_text <InlineArgument>
+      /
+      val:arg_safe_known_markup "" <BlockArgument>
+      /
+      val:arg_safe_known_text "" <InlineArgument>
+      /
+      "" "" <InlineArgument>
+    end
+
+    ##### template-safe markup definitions
+
+    # this is used to start lines with unsafe text and continue into a section
+    # of markup
+    rule arg_safe_known_markup
+      rnl h:arg_safe_markup <Markup>
+      /
+      h:known_text_paragraph (ws rnl)+ r:arg_safe_markup <Markup>
+    end
+
+    rule arg_safe_markup
+      h:arg_safe_block (ws rnl)+ r:arg_safe_markup <Markup>
+      /
+      h:arg_safe_block aws <Markup>
+    end
+
+    rule arg_safe_block
+      arg_safe_heading
+      /
+      arg_safe_list
+      /
+      arg_safe_verbatim_area
+      /
+      arg_safe_horiz_rule
+      /
+      arg_safe_known_text_paragraph
+    end
+
+    ##### headings
 
     rule heading
       s:heading_toggle+ ws l:heading_enclosed_text ws e:heading_toggle+ <Heading>
@@ -73,8 +139,58 @@ module Marker
       /
       template_start
       /
+      template_end
+      /
+      arg_delimiter
+      /
       term_delimiter
     end
+
+    rule arg_safe_heading
+      s:heading_toggle+ ws l:arg_safe_heading_enclosed_text ws e:heading_toggle+ <Heading>
+    end
+
+    rule arg_safe_heading_enclosed_text
+      h:heading_toggle ws r:arg_safe_heading_enclosed_text <Phrase>
+      /
+      h:arg_safe_heading_enclosed_word ws r:arg_safe_heading_enclosed_text <Phrase>
+      /
+      h:arg_safe_heading_enclosed_word "" <Phrase>
+    end
+
+    rule arg_safe_heading_enclosed_word
+      # equivalent to:
+      # !(template_end / arg_delimiter) heading_enclosed_word
+      bold
+      /
+      italic
+      /
+      link
+      /
+      template
+      /
+      url
+      /
+      plain_word
+      /
+      bold_toggle
+      /
+      italic_toggle
+      /
+      internal_link_start
+      /
+      internal_link_end
+      /
+      external_link_start
+      /
+      external_link_end
+      /
+      template_start
+      /
+      term_delimiter
+    end
+
+    ##### general lists
 
     # a series of list items, so they can be coalesced
     rule list
@@ -112,14 +228,52 @@ module Marker
       ':' ws phrase <Indented>
     end
 
+    # a series of list items, so they can be coalesced
+    rule arg_safe_list
+      h:arg_safe_list_item ws rnl r:arg_safe_list <List>
+      /
+      h:arg_safe_list_item ws <List>
+    end
+
+    # for matching any list item
+    rule arg_safe_list_item
+      arg_safe_bulleted
+      /
+      arg_safe_numbered
+      /
+      arg_safe_indented
+      /
+      arg_safe_definition
+    end
+
+    rule arg_safe_bulleted
+      '*' ws arg_safe_list_item <Bulleted>
+      /
+      '*' ws arg_safe_phrase <Bulleted>
+    end
+
+    rule arg_safe_numbered
+      '#' ws arg_safe_list_item <Numbered>
+      /
+      '#' ws arg_safe_phrase <Numbered>
+    end
+
+    rule arg_safe_indented
+      ':' ws arg_safe_list_item <Indented>
+      /
+      ':' ws arg_safe_phrase <Indented>
+    end
+
+    ##### definition lists
+
     rule definition
-      ';' ws term:definition_term_text ws term_delimiter ws definition:phrase <Definition>
+      ';' ws term:definition_term_phrase ws term_delimiter ws definition:phrase <Definition>
       /
       ';' ws term:phrase <Definition>
     end
 
-    rule definition_term_text
-      h:definition_term_word ws r:definition_term_text <Phrase>
+    rule definition_term_phrase
+      h:definition_term_word ws r:definition_term_phrase <Phrase>
       /
       h:definition_term_word "" <Phrase>
     end
@@ -152,7 +306,55 @@ module Marker
       external_link_end
       /
       template_start
+      /
+      template_end
+      /
+      arg_delimiter
     end
+
+    rule arg_safe_definition
+      ';' ws term:arg_safe_definition_term_phrase ws term_delimiter ws definition:arg_safe_phrase <Definition>
+      /
+      ';' ws term:arg_safe_phrase <Definition>
+    end
+
+    rule arg_safe_definition_term_phrase
+      h:arg_safe_definition_term_word ws r:arg_safe_definition_term_phrase <Phrase>
+      /
+      h:arg_safe_definition_term_word "" <Phrase>
+    end
+
+    rule arg_safe_definition_term_word
+      arg_safe_bold
+      /
+      arg_safe_italic
+      /
+      arg_safe_link
+      /
+      template
+      /
+      url
+      /
+      plain_word
+      /
+      bold_toggle
+      /
+      italic_toggle
+      /
+      heading_toggle
+      /
+      internal_link_start
+      /
+      internal_link_end
+      /
+      external_link_start
+      /
+      external_link_end
+      /
+      template_start
+    end
+
+    ##### verbatim areas
 
     rule verbatim_area
       h:verbatim rnl r:verbatim_area <VerbatimArea>
@@ -166,13 +368,33 @@ module Marker
 #      "\t" v:(!"\n" .)* <Verbatim>
     end
 
+    rule arg_safe_verbatim_area
+      h:arg_safe_verbatim rnl r:arg_safe_verbatim_area <VerbatimArea>
+      /
+      h:arg_safe_verbatim "" <VerbatimArea>
+    end
+
+    rule arg_safe_verbatim
+      " " v:( !("\n" / arg_delimiter / template_end) .)* <Verbatim>
+    end
+
+    ##### horizontal rules
+
+    # horizontal rules deviate from how MediaWiki does things.
+    # consider this:
+    #   ---- a para-
+    #   graph
+    # MediaWiki renders (newlines removed): <hr /><p>a para-</p><p>graph</p>
+    # this renders (newlines removed): <hr /><p>a para-graph</p>
+
     rule horiz_rule
-      # this deviates from how MediaWiki does things.  consider this:
-      #   ---- a para-
-      #   graph
-      # MediaWiki renders (newlines removed): <hr /><p>a para-</p><p>graph</p>
-      # this renders (newlines removed): <hr /><p>a para-graph</p>
       "----" "-"* ws t:known_text_paragraph <HorizRule>
+      /
+      "----" "-"* <HorizRule>
+    end
+
+    rule arg_safe_horiz_rule
+      "----" "-"* ws t:arg_safe_known_text_paragraph <HorizRule>
       /
       "----" "-"* <HorizRule>
     end
@@ -183,6 +405,10 @@ module Marker
       text "" <Paragraph>
     end
 
+    rule arg_safe_paragraph
+      arg_safe_text "" <Paragraph>
+    end
+
     # a block of normal text, including single newlines but not a special line
     rule text
       !(heading / list / verbatim_area / horiz_rule) h:phrase ws rnl r:text <TextBlock>
@@ -190,12 +416,24 @@ module Marker
       !(heading / list / verbatim_area / horiz_rule) h:phrase ws <TextBlock>
     end
 
-    # paragraph wrapper for unsafe text
+    # arg-safe variant
+    rule arg_safe_text
+      !(arg_safe_heading / arg_safe_list / arg_safe_verbatim_area / arg_safe_horiz_rule) h:arg_safe_phrase ws rnl r:arg_safe_text <TextBlock>
+      /
+      !(arg_safe_heading / arg_safe_list / arg_safe_verbatim_area / arg_safe_horiz_rule) h:arg_safe_phrase ws <TextBlock>
+    end
+
+    # paragraph wrapper for known text
     rule known_text_paragraph
       text:known_text "" <Paragraph>
     end
 
-    # a block of text that does not require a !line check
+    # paragraph wrapper for arg-safe known text
+    rule arg_safe_known_text_paragraph
+      text:arg_safe_known_text "" <Paragraph>
+    end
+
+    # "known" text a block of text that does not require a !line check
     #
     # in other words, it is known that this block is text and not line-anchored
     #
@@ -211,6 +449,14 @@ module Marker
       h:phrase ws <TextBlock>
     end
 
+    rule arg_safe_known_text
+      h:arg_safe_phrase ws rnl r:arg_safe_text <TextBlock>
+      /
+      h:arg_safe_phrase ws <TextBlock>
+    end
+
+    ##### general words and phrases
+
     # a phrase of words without newlines
     rule phrase
       h:word ws r:phrase <Phrase>
@@ -218,6 +464,7 @@ module Marker
       h:word "" <Phrase>
     end
 
+    # words not inside any container
     rule word
       bold
       /
@@ -247,10 +494,54 @@ module Marker
       /
       template_start
       /
+      template_end
+      /
+      arg_delimiter
+      /
       term_delimiter
     end
 
-    ##### text markup
+    # a phrase of arg-safe words without newlines
+    rule arg_safe_phrase
+      h:arg_safe_word ws r:arg_safe_phrase <Phrase>
+      /
+      h:arg_safe_word "" <Phrase>
+    end
+
+    # words inside templates but not other markup
+    rule arg_safe_word
+      arg_safe_bold
+      /
+      arg_safe_italic
+      /
+      arg_safe_link
+      /
+      template
+      /
+      url
+      /
+      plain_word
+      /
+      bold_toggle
+      /
+      italic_toggle
+      /
+      heading_toggle
+      /
+      internal_link_start
+      /
+      internal_link_end
+      /
+      external_link_start
+      /
+      external_link_end
+      /
+      template_start
+      /
+      term_delimiter
+    end
+
+    ##### bold
 
     rule bold
       bold_toggle ws bold_enclosed_text ws bold_toggle <Bold>
@@ -286,8 +577,51 @@ module Marker
       /
       template_start
       /
+      template_end
+      /
+      arg_delimiter
+      /
       term_delimiter
     end
+
+    rule arg_safe_bold
+      bold_toggle ws arg_safe_bold_enclosed_text ws bold_toggle <Bold>
+    end
+
+    rule arg_safe_bold_enclosed_text
+      h:arg_safe_bold_enclosed_word ws r:arg_safe_bold_enclosed_text <Phrase>
+      /
+      h:arg_safe_bold_enclosed_word "" <Phrase>
+    end
+
+    # things that can be inside arg-safe bold areas
+    rule arg_safe_bold_enclosed_word
+      arg_safe_italic
+      /
+      arg_safe_link
+      /
+      template
+      /
+      url
+      /
+      plain_word
+      /
+      heading_toggle
+      /
+      internal_link_start
+      /
+      internal_link_end
+      /
+      external_link_start
+      /
+      external_link_end
+      /
+      template_start
+      /
+      term_delimiter
+    end
+
+    ##### italics
 
     rule italic
       italic_toggle ws italic_enclosed_text ws italic_toggle_no_lookahead <Italic>
@@ -323,8 +657,53 @@ module Marker
       /
       template_start
       /
+      template_end
+      /
+      arg_delimiter
+      /
       term_delimiter
     end
+
+    rule arg_safe_italic
+      italic_toggle ws arg_safe_italic_enclosed_text ws italic_toggle_no_lookahead <Italic>
+    end
+
+    rule arg_safe_italic_enclosed_text
+      h:arg_safe_italic_enclosed_word ws r:arg_safe_italic_enclosed_text <Phrase>
+      /
+      h:arg_safe_italic_enclosed_word "" <Phrase>
+    end
+
+    # things that can be inside arg-safe italic areas
+    rule arg_safe_italic_enclosed_word
+      # this is equivalent to:
+      # !(template_end / arg_delimiter) italic_enclosed_word
+      arg_safe_bold
+      /
+      arg_safe_link
+      /
+      template
+      /
+      url
+      /
+      plain_word
+      /
+      heading_toggle
+      /
+      internal_link_start
+      /
+      internal_link_end
+      /
+      external_link_start
+      /
+      external_link_end
+      /
+      template_start
+      /
+      term_delimiter
+    end
+
+    ##### links
 
     rule link
       internal_link
@@ -332,16 +711,24 @@ module Marker
       external_link
     end
 
-    # internal links:
+    rule arg_safe_link
+      arg_safe_internal_link
+      /
+      arg_safe_external_link
+    end
+
+    ##### internal links
+
     # [[ link target | link label ]]
     # * can contain white space
     # * cannot contain new lines
+
     rule internal_link
-      internal_link_start ws t:plain_text ws a:arg_delimiter ws l:internal_link_enclosed_text ws internal_link_end <InternalLink>
+      internal_link_start ws t:plain_phrase ws a:arg_delimiter ws l:internal_link_enclosed_text ws internal_link_end <InternalLink>
       /
-      internal_link_start ws t:plain_text ws a:arg_delimiter ws internal_link_end <InternalLink>
+      internal_link_start ws t:plain_phrase ws a:arg_delimiter ws internal_link_end <InternalLink>
       /
-      internal_link_start ws t:plain_text ws internal_link_end <InternalLink>
+      internal_link_start ws t:plain_phrase ws internal_link_end <InternalLink>
     end
 
     rule internal_link_enclosed_text
@@ -373,10 +760,57 @@ module Marker
       /
       template_start
       /
+      template_end
+      /
+      arg_delimiter
+      /
       term_delimiter
     end
 
-    # external links:
+    rule arg_safe_internal_link
+      internal_link_start ws t:plain_phrase ws a:arg_delimiter ws l:arg_safe_internal_link_enclosed_text ws internal_link_end <InternalLink>
+      /
+      internal_link_start ws t:plain_phrase ws a:arg_delimiter ws internal_link_end <InternalLink>
+      /
+      internal_link_start ws t:plain_phrase ws internal_link_end <InternalLink>
+    end
+
+    rule arg_safe_internal_link_enclosed_text
+      h:arg_safe_internal_link_enclosed_word ws r:arg_safe_internal_link_enclosed_text <Phrase>
+      /
+      h:arg_safe_internal_link_enclosed_word "" <Phrase>
+    end
+
+    rule internal_link_enclosed_word
+      # this is equivalent to:
+      # !(template_end / arg_delimiter) internal_link_enclosed_word
+      arg_safe_bold
+      /
+      arg_safe_italic
+      /
+      template
+      /
+      plain_word
+      /
+      bold_toggle
+      /
+      italic_toggle
+      /
+      heading_toggle
+      /
+      internal_link_start
+      /
+      external_link_start
+      /
+      external_link_end
+      /
+      template_start
+      /
+      term_delimiter
+    end
+
+    ##### external links
+
     # [ url label ]
     # * can contain white space
     # * cannot contain new lines
@@ -388,6 +822,7 @@ module Marker
     #
     # also use this rule to match bad internal link syntax [[ url | label ]]
     # because the rendering rules are the same
+
     rule external_link
 #      external_link_start ws t:url rws l:external_link_enclosed_text ws external_link_end <ExternalLink>
 #      /
@@ -435,88 +870,70 @@ module Marker
       /
       template_start
       /
+      template_end
+      /
+      arg_delimiter
+      /
       term_delimiter
     end
 
-    rule template
-      template_start aws t:plain_text aws arg_delimiter ws args:arg_list aws template_end <Template>
+    rule arg_safe_external_link
+#      external_link_start ws t:url rws l:external_link_enclosed_text ws external_link_end <ExternalLink>
+#      /
+#      external_link_start ws t:url ws external_link_end <ExternalLink>
+#      /
+      external_link_start ws t:implicit_url rws l:arg_safe_external_link_enclosed_text ws external_link_end <ExternalLink>
       /
-      template_start aws t:plain_text aws template_end <Template>
+      external_link_start ws t:implicit_url ws external_link_end <ExternalLink>
+      /
+      internal_link_start ws t:implicit_url ws arg_delimiter ws l:arg_safe_internal_link_enclosed_text ws internal_link_end <ExternalLink>
+      /
+      internal_link_start ws t:implicit_url rws l:arg_safe_internal_link_enclosed_text ws internal_link_end <ExternalLink>
+      /
+      internal_link_start ws t:implicit_url ws internal_link_end <ExternalLink>
     end
 
-    rule arg_list
-      h:arg aws arg_delimiter ws r:arg_list <Arguments>
+    rule arg_safe_external_link_enclosed_text
+      h:arg_safe_external_link_enclosed_word ws r:arg_safe_external_link_enclosed_text <Phrase>
       /
-      h:arg "" <Arguments>
+      h:arg_safe_external_link_enclosed_word "" <Phrase>
     end
 
-    # a plain (positional) argument or a named (name=text) argument
-    #
-    # there are two types of values matched here, inline and block.  inline
-    # values are plain text areas that can be included in the containing
-    # paragraph.  block values are things like lists and groups of paragraphs
-    # that would normally be rendered as paragraphs themselves.  this
-    # distinction is necessary to gracefully handle different types of uses for
-    # templates.  examples:
-    #
-    # inline: text with a fixed-width {{tt|word}} embedded.
-    # block:
-    # {{ ruby |
-    # def /( str )
-    #   return File.join( self, str )
-    # end
-    # }}
-    rule arg
-      name:plain_text ws heading_toggle ws val:arg_safe_known_markup <BlockArgument>
+    rule arg_safe_external_link_enclosed_word
+      # this is equivalent to:
+      # !(template_end / arg_delimiter) external_link_enclosed_word
+      arg_safe_bold
       /
-      name:plain_text ws heading_toggle ws val:known_text <InlineArgument>
+      arg_safe_italic
       /
-      val:arg_safe_known_markup "" <BlockArgument>
+      template
       /
-      val:known_text "" <InlineArgument>
+      url
       /
-      "" "" <InlineArgument>
+      plain_word
+      /
+      bold_toggle
+      /
+      italic_toggle
+      /
+      heading_toggle
+      /
+      internal_link_start
+      /
+      internal_link_end
+      /
+      external_link_start
+      /
+      template_start
+      /
+      term_delimiter
     end
 
-    # this is used to start lines with unsafe text and continue into a section
-    # of markup
-    rule arg_safe_known_markup
-      rnl h:arg_safe_markup <Markup>
-      /
-      h:known_text_paragraph (ws rnl)+ r:arg_safe_markup <Markup>
-    end
-
-    rule arg_safe_markup
-      h:arg_safe_block (ws rnl)+ r:arg_safe_markup <Markup>
-      /
-      h:arg_safe_block aws <Markup>
-    end
-
-    rule arg_safe_block
-      heading
-      /
-      list
-      /
-      arg_safe_verbatim_area
-      /
-      horiz_rule
-      /
-      known_text_paragraph
-    end
-
-    rule arg_safe_verbatim_area
-      h:arg_safe_verbatim rnl r:arg_safe_verbatim_area <VerbatimArea>
-      /
-      h:arg_safe_verbatim "" <VerbatimArea>
-    end
-
-    rule arg_safe_verbatim
-      " " v:( !("\n" / arg_delimiter / template_end) .)* <Verbatim>
-    end
+    ##### plain words and phrases
 
     # a phrase of plain words
-    rule plain_text
-      h:plain_word ws r:plain_text <Phrase>
+    rule plain_phrase
+      h:plain_word ws r:plain_phrase <Phrase>
       /
       h:plain_word "" <Phrase>
     end
