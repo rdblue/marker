@@ -1,5 +1,5 @@
 #--
-# Copyright 2009-2011 Ryan Blue.
+# Copyright 2009-2012 Ryan Blue.
 # Distributed under the terms of the GNU General Public License (GPL).
 # See the LICENSE file for further information on the GPL.
 #++
@@ -8,6 +8,8 @@ module Marker
   grammar Language
     rule document
       rnl* markup aws <Document>
+      /
+      aws "" <Document>
     end
 
     rule markup
@@ -77,7 +79,7 @@ module Marker
     rule arg_safe_known_markup
       rnl h:arg_safe_markup <Markup>
       /
-      h:known_text_paragraph (ws rnl)+ r:arg_safe_markup <Markup>
+      h:arg_safe_known_text_paragraph (ws rnl)+ r:arg_safe_markup <Markup>
     end
 
     rule arg_safe_markup
@@ -781,7 +783,7 @@ module Marker
       h:arg_safe_internal_link_enclosed_word "" <Phrase>
     end
 
-    rule internal_link_enclosed_word
+    rule arg_safe_internal_link_enclosed_word
       # this is equivalent to:
       # !(template_end / arg_delimiter) internal_link_enclosed_word
       arg_safe_bold
