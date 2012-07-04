@@ -116,7 +116,7 @@ module Marker #:nodoc:
 
   class Argument < ParseNode
     def to_html( options = {} )
-      to_s
+      to_s(options)
     end
 
     def to_s( options = {} )
