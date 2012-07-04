@@ -366,8 +366,8 @@ module Marker
 
     rule verbatim
       " " v:(!"\n" .)* <Verbatim>
-#      /
-#      "\t" v:(!"\n" .)* <Verbatim>
+      /
+      "\t" v:(!"\n" .)* <Verbatim>
     end
 
     rule arg_safe_verbatim_area
@@ -378,6 +378,8 @@ module Marker
 
     rule arg_safe_verbatim
       " " v:( !("\n" / arg_delimiter / template_end) .)* <Verbatim>
+      /
+      "\t" v:(!"\n" .)* <Verbatim>
     end
 
     ##### horizontal rules
