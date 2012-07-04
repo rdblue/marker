@@ -36,5 +36,9 @@ module Marker #:nodoc:
     def r
       nil
     end
+
+    def single?
+      r.nil?
+    end
   end
 end

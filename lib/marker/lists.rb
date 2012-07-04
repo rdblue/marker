@@ -166,19 +166,19 @@ module Marker #:nodoc:
     def to_s( options = {} )
       indent = (options[:indent] || 0)
       '    ' * (indent > 0 ? indent - 1 : 0) +
-      '  * ' + phrase.to_s( options )
+      '  * ' + content.to_s( options )
     end
 
     def structure
-      if phrase
-        BulletedListBuilder.new( ItemBuilder.new( phrase ) )
+      if content
+        BulletedListBuilder.new( ItemBuilder.new( content ) )
       else
-        BulletedListBuilder.new( list_item.structure )
+        BulletedListBuilder.new( item.structure )
       end
     end
 
     #-- defaults ++
-    def phrase
+    def content
       nil
     end
   end
@@ -197,19 +197,19 @@ module Marker #:nodoc:
     def to_s( options = {} )
       indent = (options[:indent] || 0)
       '    ' * (indent > 0 ? indent - 1 : 0) +
-      "#{'%2d' % options[:num]}. #{phrase.to_s( options )}"
+      "#{'%2d' % options[:num]}. #{content.to_s( options )}"
     end
 
     def structure
-      if phrase
-        NumberedListBuilder.new( ItemBuilder.new( phrase ) )
+      if content
+        NumberedListBuilder.new( ItemBuilder.new( content ) )
       else
-        NumberedListBuilder.new( list_item.structure )
+        NumberedListBuilder.new( item.structure )
       end
     end
 
     #-- defaults ++
-    def phrase
+    def content
       nil
     end
   end
@@ -228,19 +228,19 @@ module Marker #:nodoc:
     def to_s( options = {} )
       indent = (options[:indent] || 0)
       '    ' * (indent > 0 ? indent : 0) +
-      phrase.to_s(options)
+      content.to_s(options)
     end
 
     def structure
-      if phrase
-        IndentedListBuilder.new( ItemBuilder.new( phrase ) )
+      if content
+        IndentedListBuilder.new( ItemBuilder.new( content ) )
       else
-        IndentedListBuilder.new( list_item.structure )
+        IndentedListBuilder.new( item.structure )
       end
     end
 
     #-- defaults ++
-    def phrase
+    def content
       nil
     end
   end

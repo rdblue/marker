@@ -13,7 +13,7 @@ Rake::TestTask.new("test") { |t|
 module ReadmeTemplates
   # output some style.  the only parts that are really required are the hr and
   # div.indent styles, the rest just look nice.
-  def style( format, positional_args, hash_args )
+  def style( format, positional_args, hash_args, options )
     # colors, from tango icon theme guidelines
     grey = '#BABDB6'
     light_grey = '#EEEEEC'
@@ -60,7 +60,7 @@ module ReadmeTemplates
 
   # wraps the first positional arg in <tt> and </tt>
   # this should eventually have markup, since it's really handy.
-  def tt( format, positional_args, hash_args )
+  def tt( format, positional_args, hash_args, options )
     case format
     when :html
       "<tt>#{positional_args.first}</tt>"
@@ -70,8 +70,8 @@ module ReadmeTemplates
   end
 
   # display a template name, with {{ and }}
-  def template( format, positional_args, hash_args )
-    tt( format, ['{{' + positional_args[0] + '}}'], hash_args )
+  def template( format, positional_args, hash_args, options )
+    tt( format, ['{{' + positional_args[0] + '}}'], hash_args, options )
   end
 end
 

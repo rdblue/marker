@@ -69,7 +69,7 @@ class FormattingTest < Test::Unit::TestCase
     text = "paragraph 1\n\nparagraph 2\n\nparagraph 3"
     markup = Marker.parse text
 
-    assert_match("<p>paragraph 1</p>\n\n<p>paragraph 2</p>\n\n<p>paragraph 3</p>", markup.to_html)
+    assert_match("<p>paragraph 1</p>\n<p>paragraph 2</p>\n<p>paragraph 3</p>", markup.to_html)
   end
 
   def test_newlines_in_paragraphs
