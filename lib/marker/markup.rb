@@ -1,5 +1,5 @@
 #--
-# Copyright 2009 Ryan Blue.
+# Copyright 2009-2012 Ryan Blue.
 # Distributed under the terms of the GNU General Public License (GPL).
 # See the LICENSE file for further information on the GPL.
 #++
@@ -11,20 +11,20 @@ module Marker #:nodoc:
     def to_html( options = {} )
       options = make_options( options )
 
-      (
+      markup ? (
         markup.to_html( options ) + "\n" +
         options[:footnotes].to_html( options )
-      )
+      ) : ""
     end
 
     def to_s( options = {} )
       options = make_options( options )
 
 
-      (
-        markup.to_html( options ) + "\n\n" +
+      markup ? (
+        markup.to_s( options ) + "\n\n" +
         options[:footnotes].to_s( options )
-      )
+      ) : ""
     end
 
     def make_options( user_options )
@@ -33,6 +33,11 @@ module Marker #:nodoc:
       o.merge!( :footnotes => Footnotes.new ) unless user_options[:nofootnotes]
       o.merge!( user_options )
       o
+    end
+
+    #-- defaults ++
+    def markup
+      nil
     end
   end
 
@@ -78,11 +83,11 @@ module Marker #:nodoc:
     def to_s( options = {} )
       return "" unless notes.any?
 
-      s = "\n"
+      s = "\n---- Notes ----\n"
       notes.each_with_index{ |n, i|
-        target = n.shift
-        if n.any?
-          s << "#{'%2d' % (i + 1)}. #{n.join(' ')}: #{target}\n"
+        target, *label_words = n
+        if label_words.any?
+          s << "#{'%2d' % (i + 1)}. #{label_words.join(' ')}: #{target}\n"
         else
           s << "#{'%2d' % (i + 1)}. #{target}\n"
         end
