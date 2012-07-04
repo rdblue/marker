@@ -408,7 +408,7 @@ module Marker
     end
 
     rule arg_safe_paragraph
-      arg_safe_text "" <Paragraph>
+      text:arg_safe_text "" <Paragraph>
     end
 
     # a block of normal text, including single newlines but not a special line
@@ -587,7 +587,7 @@ module Marker
     end
 
     rule arg_safe_bold
-      bold_toggle ws arg_safe_bold_enclosed_text ws bold_toggle <Bold>
+      bold_toggle ws bold_enclosed_text:arg_safe_bold_enclosed_text ws bold_toggle <Bold>
     end
 
     rule arg_safe_bold_enclosed_text
@@ -667,7 +667,7 @@ module Marker
     end
 
     rule arg_safe_italic
-      italic_toggle ws arg_safe_italic_enclosed_text ws italic_toggle_no_lookahead <Italic>
+      italic_toggle ws italic_enclosed_text:arg_safe_italic_enclosed_text ws italic_toggle_no_lookahead <Italic>
     end
 
     rule arg_safe_italic_enclosed_text
