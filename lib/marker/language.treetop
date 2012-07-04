@@ -213,21 +213,21 @@ module Marker
     end
 
     rule bulleted
-      '*' ws list_item <Bulleted>
+      '*' ws item:list_item <Bulleted>
       /
-      '*' ws phrase <Bulleted>
+      '*' ws content:phrase <Bulleted>
     end
 
     rule numbered
-      '#' ws list_item <Numbered>
+      '#' ws item:list_item <Numbered>
       /
-      '#' ws phrase <Numbered>
+      '#' ws content:phrase <Numbered>
     end
 
     rule indented
-      ':' ws list_item <Indented>
+      ':' ws item:list_item <Indented>
       /
-      ':' ws phrase <Indented>
+      ':' ws content:phrase <Indented>
     end
 
     # a series of list items, so they can be coalesced
@@ -249,21 +249,21 @@ module Marker
     end
 
     rule arg_safe_bulleted
-      '*' ws arg_safe_list_item <Bulleted>
+      '*' ws item:arg_safe_list_item <Bulleted>
       /
-      '*' ws arg_safe_phrase <Bulleted>
+      '*' ws content:arg_safe_phrase <Bulleted>
     end
 
     rule arg_safe_numbered
-      '#' ws arg_safe_list_item <Numbered>
+      '#' ws item:arg_safe_list_item <Numbered>
       /
-      '#' ws arg_safe_phrase <Numbered>
+      '#' ws content:arg_safe_phrase <Numbered>
     end
 
     rule arg_safe_indented
-      ':' ws arg_safe_list_item <Indented>
+      ':' ws item:arg_safe_list_item <Indented>
       /
-      ':' ws arg_safe_phrase <Indented>
+      ':' ws content:arg_safe_phrase <Indented>
     end
 
     ##### definition lists

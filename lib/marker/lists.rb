@@ -91,75 +91,75 @@ module Marker #:nodoc:
 
   class Bulleted < ParseNode
     def to_html( options = {} )
-      "<li>#{phrase.to_html(options)}</li>"
+      "<li>#{content.to_html(options)}</li>"
     end
 
     def to_s( options = {} )
       indent = (options[:indent] || 0)
       '    ' * (indent > 0 ? indent - 1 : 0) +
-      '  * ' + phrase.to_s( options )
+      '  * ' + content.to_s( options )
     end
 
     def structure
-      if phrase
+      if content
         ListBuilder.new( self, :ul )
       else
-        ListBuilder.new( list_item.structure, :ul )
+        ListBuilder.new( item.structure, :ul )
       end
     end
 
     #-- defaults ++
-    def phrase
+    def content
       nil
     end
   end
 
   class Numbered < ParseNode
     def to_html( options = {} )
-      "<li>#{phrase.to_html(options)}</li>"
+      "<li>#{content.to_html(options)}</li>"
     end
 
     def to_s( options = {} )
       indent = (options[:indent] || 0)
       '    ' * (indent > 0 ? indent - 1 : 0) +
-      "#{'%2d' % options[:num]}. #{phrase.to_s( options )}"
+      "#{'%2d' % options[:num]}. #{content.to_s( options )}"
     end
 
     def structure
-      if phrase
+      if content
         ListBuilder.new( self, :ol )
       else
-        ListBuilder.new( list_item.structure, :ol )
+        ListBuilder.new( item.structure, :ol )
       end
     end
 
     #-- defaults ++
-    def phrase
+    def content
       nil
     end
   end
 
   class Indented < ParseNode
     def to_html( options = {} )
-      "<div>#{phrase.to_html(options)}</div>"
+      "<div>#{content.to_html(options)}</div>"
     end
 
     def to_s( options = {} )
       indent = (options[:indent] || 0)
       '    ' * (indent > 0 ? indent : 0) +
-      phrase.to_s(options)
+      content.to_s(options)
     end
 
     def structure
-      if phrase
+      if content
         ListBuilder.new( self, :div, :class => 'indent' )
       else
-        ListBuilder.new( list_item.structure, :div, :class => 'indent' )
+        ListBuilder.new( item.structure, :div, :class => 'indent' )
       end
     end
 
     #-- defaults ++
-    def phrase
+    def content
       nil
     end
   end
