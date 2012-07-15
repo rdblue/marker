@@ -59,7 +59,7 @@ class ListTest < Test::Unit::TestCase
     markup = Marker.parse text
     
     assert_match("<ol><li>List item 1</li></ol><ul><li>List item 2</li></ul><ol><li>List item 3</li></ol><dl><dt>List item 4</dt>" +
-        "<dd>definition</dd></dl><div class='indent'><div class='indent_item'>List item 5</div></div><ul><li>List item 6</li></ul>", markup.to_html)
+        "<dd>definition</dd></dl><div class='indent'><div class='indented_item'>List item 5</div></div><ul><li>List item 6</li></ul>", markup.to_html)
   end
 
   def test_nested_mixed_list
@@ -67,7 +67,7 @@ class ListTest < Test::Unit::TestCase
     markup = Marker.parse text
     
     assert_match("<ol><li>List item 1<ul><li>List item 2</li></ul></li><li>List item 3<ol><li>List item 4</li></ol>" +
-        "<dl><dt>List item 5</dt><dd>definition</dd></dl><div class='indent'><div class='indent_item'>List item 6</div></div></li></ol>", markup.to_html)
+        "<dl><dt>List item 5</dt><dd>definition</dd></dl><div class='indent'><div class='indented_item'>List item 6</div></div></li></ol>", markup.to_html)
   end
 
   def test_bare_nested_list
